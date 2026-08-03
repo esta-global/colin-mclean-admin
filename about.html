@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smooth Scroll Carousel</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        overflow-x: hidden;
+      }
+
+      .carousel {
+        position: relative;
+        width: 100%;
+        height: 100vh; /* Full viewport height */
+        overflow: hidden;
+        visibility: hidden; /* Hide until it comes into view */
+      }
+
+      .carousel-slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        background-color: #ccc;
+        transform: translateX(100%); /* Initially off-screen to the right */
+        transition: transform 0.6s ease; /* Simple slide transition */
+      }
+
+      .carousel-slide.active {
+        transform: translateX(0); /* Center the active slide */
+      }
+
+      .carousel-slide.exit-left {
+        transform: translateX(-100%); /* Exit to the left */
+      }
+
+      .carousel-slide.enter-right {
+        transform: translateX(100%); /* Enter from the right */
+      }
+
+      .hidden-after-carousel {
+        display: none; /* Hide content after carousel until all slides are shown */
+      }
+
+      .visible {
+        display: block !important; /* Make the content visible after carousel */
+      }
+
+      .w {
+        height: 800px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="w">
+      <p>
+        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Qui nisi rem
+        ullam quis dignissimos ea pariatur fuga. Quod minus cupiditate obcaecati
+        libero consequatur voluptatum laborum aperiam! Facere, deserunt fugiat.
+        Cumque.
+      </p>
+    </div>
+
+    <!-- Carousel Section -->
+    <div class="carousel">
+      <div class="carousel-slide active" style="background-color: #f0a">
+        Slide 1
+      </div>
+      <div class="carousel-slide" style="background-color: #afa">Slide 2</div>
+      <div class="carousel-slide" style="background-color: #aaf">Slide 3</div>
+      <div class="carousel-slide" style="background-color: #faa">Slide 4</div>
+      <div class="carousel-slide" style="background-color: #ffa">Slide 5</div>
+    </div>
+
+    <!-- Content After Carousel -->
+    <div class="w hidden-after-carousel">
+      <p>
+        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Qui nisi rem
+        ullam quis dignissimos ea pariatur fuga. Quod minus cupiditate obcaecati
+        libero consequatur voluptatum laborum aperiam! Facere, deserunt fugiat.
+        Cumque.
+      </p>
+    </div>
+
+    <script>
+      let currentSlide = 0;
+      const slides = document.querySelectorAll(".carousel-slide");
+      const afterCarouselContent = document.querySelector(
+        ".hidden-after-carousel"
+      );
+      let isThrottled = false;
+      let isCarouselActive = false; // Will be true when the carousel is in view
+
+      // Function to update the slides
+      function updateSlides() {
+        slides.forEach((slide, index) => {
+          slide.classList.remove("active", "enter-right", "exit-left");
+
+          if (index === currentSlide) {
+            slide.classList.add("active"); // Make the current slide visible
+          }
+        });
+
+        // If last slide is shown, make content after carousel visible
+        if (currentSlide === slides.length - 1) {
+          afterCarouselContent.classList.add("visible");
+        }
+      }
+
+      // Handle scroll inside carousel
+      function handleScroll(event) {
+        if (isThrottled || !isCarouselActive) return; // Prevent fast scrolls or if carousel not active
+
+        isThrottled = true;
+
+        if (event.deltaY > 0) {
+          // Scrolling down (move to the next slide)
+          if (currentSlide < slides.length - 1) {
+            slides[currentSlide].classList.add("exit-left"); // Current slide exits left
+            currentSlide++;
+            slides[currentSlide].classList.add("enter-right"); // New slide enters from right
+          }
+        } else {
+          // Scrolling up (move to the previous slide)
+          if (currentSlide > 0) {
+            slides[currentSlide].classList.add("enter-right"); // Current slide enters right
+            currentSlide--;
+            slides[currentSlide].classList.add("exit-left"); // Previous slide exits left
+          }
+        }
+
+        updateSlides();
+
+        setTimeout(() => {
+          isThrottled = false;
+        }, 700); // Shorter delay to match smoother animation speed
+      }
+
+      // Intersection Observer to detect when the carousel comes into view
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              isCarouselActive = true;
+              document.querySelector(".carousel").style.visibility = "visible";
+            } else {
+              isCarouselActive = false;
+            }
+          });
+        },
+        { threshold: 0.5 }
+      ); // Trigger when 50% of carousel is in view
+
+      observer.observe(document.querySelector(".carousel"));
+
+      // Add wheel event listener for scroll
+      window.addEventListener("wheel", handleScroll);
+
+      updateSlides();
+    </script>
+  </body>
+</html>
