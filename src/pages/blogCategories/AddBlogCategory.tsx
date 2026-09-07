@@ -164,7 +164,7 @@ export function AddBlogCategory() {
                       <div className="form-group col-md-6">
                     <label className="blog-category-field-label">Status</label>
                     <div className="blog-category-status-options">
-                      <label className="blog-category-status-option">
+                      <label className="blog-category-status-option" title="Visible for posts">
                         <input
                           type="radio"
                           name="status"
@@ -176,10 +176,9 @@ export function AddBlogCategory() {
                         />
                         <span>
                           <strong>Active</strong>
-                          <small>Visible for posts</small>
                         </span>
                       </label>
-                      <label className="blog-category-status-option">
+                      <label className="blog-category-status-option" title="Hide from selection">
                         <input
                           type="radio"
                           name="status"
@@ -191,7 +190,6 @@ export function AddBlogCategory() {
                         />
                         <span>
                           <strong>Disabled</strong>
-                          <small>Hide from selection</small>
                         </span>
                       </label>
                     </div>

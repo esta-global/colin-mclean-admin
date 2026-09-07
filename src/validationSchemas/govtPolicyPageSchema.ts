@@ -87,6 +87,9 @@ export interface GovtPolicyPageValues {
     demandSide: GovtEngagementSideIssue;
   };
   sections?: GovtEngagementSection[];
+  richContent: {
+    html: string;
+  };
   seo: {
     metaTitle: string;
     metaDescription: string;
@@ -180,6 +183,9 @@ export const govtPolicyPageSchema = Yup.object({
       }),
     }),
   ).optional(),
+  richContent: Yup.object({
+    html: stringField(),
+  }),
   seo: Yup.object({
     metaTitle: stringField(),
     metaDescription: stringField(),
@@ -192,8 +198,17 @@ export const govtPolicyPages = [
   { slug: "quality-control-order", label: "Quality Control Order" },
   { slug: "bee-star-rating", label: "BEE Star Rating" },
   { slug: "energy-conservation", label: "Energy Conservation" },
+  { slug: "atmanirbhar", label: "Atmanirbhar" },
   { slug: "govt-engagements", label: "Government Engagements" },
 ];
+
+const atmanirbharRichHtml = `
+<p><strong><span style="color: #008cff;">The Indian fan industry, comprising of several players has been at the forefront of innovation and adoption of new technology for the greater good of the society. Having one of the highest penetration levels</span></strong> close to ~80% market penetration, touching the lives of 100 crore citizens of India, fans are a mass market product due to their functionality and benefit against the ever-looming heatwave in India.</p>
+<p><strong><span style="color: #008cff;">We are proud to state the fact that the fan industry is</span></strong> electrical fans industry and is one of the most highly indigenized industries. We are happy to inform you that the manufacturing capacity in the country today is ~100% localized for ceiling fans. Further, almost 90% of all the fans sold in India are 'Made-in-India'.</p>
+<p><strong><span style="color: #008cff;">The industry ties itself to the Atmanirbhar Bharat Abhiyaan</span></strong> or <strong><span style="color: #008cff;">Self-reliant India</span></strong> vision of our Hon'ble PM Shri Narendra Modi.</p>
+<p>With further impetus in the form of research and development of a newer form of components for fans that are energy efficient such as BLDC motors, the aim is to make the industry independent of import of raw material and self-reliant in all senses.</p>
+<p>The fan industry touches all the pillars of self-reliance, viz.</p>
+`;
 
 const beeStarRatingContent = {
   introParagraphs: [
@@ -379,12 +394,40 @@ export const createGovtPolicyPageInitialValues = (
         url: "",
       },
     },
+    richContent: {
+      html: slug === "atmanirbhar" ? atmanirbharRichHtml.trim() : "",
+    },
     seo: {
       metaTitle: "",
       metaDescription: "",
       keywords: [],
     },
   };
+
+  if (slug === "atmanirbhar") {
+    return {
+      ...baseValues,
+      bannerSection: {
+        title: "Atmanirbhar",
+        highlightedTitle: "",
+        image: "",
+      },
+      detailsSection: {
+        ...baseValues.detailsSection,
+        heading: "Atmanirbhar",
+        introParagraphs: [],
+        bulletHeading: "",
+        bullets: [],
+        bottomParagraphs: [],
+        cta: { label: "", url: "" },
+      },
+      seo: {
+        metaTitle: "Atmanirbhar | IFMA",
+        metaDescription: "Atmanirbhar policy page content for the Indian fan industry.",
+        keywords: ["Atmanirbhar", "IFMA", "Indian fan industry", "Self-reliant India"],
+      },
+    };
+  }
 
   if (slug === "govt-engagements") {
     const defaultEngagements = createGovtEngagementDefaultValues();

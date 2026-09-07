@@ -15,8 +15,43 @@ import { Link } from "react-router-dom";
 import { deleteConfirmation, get, put, remove } from "../../utills";
 import { toast } from "react-toastify";
 import { addUrlToFile } from "../../utills/addUrlToFile";
+import { ContentType } from "../../validationSchemas/postSchema";
 
-export function PostList() {
+type ContentListLabels = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  addText: string;
+  searchPlaceholder: string;
+  csvFileName: string;
+};
+
+const contentListLabels: Record<ContentType, ContentListLabels> = {
+  blog: {
+    eyebrow: "Content",
+    title: "Blogs",
+    description: "Manage blog posts, visibility, and publishing status.",
+    addText: "Add Blog",
+    searchPlaceholder: "Search blogs",
+    csvFileName: "blogs",
+  },
+  trivia: {
+    eyebrow: "Content",
+    title: "Trivia",
+    description: "Manage trivia stories, visibility, and publishing status.",
+    addText: "Add Trivia",
+    searchPlaceholder: "Search trivia",
+    csvFileName: "trivia",
+  },
+};
+
+function contentPaths(type: ContentType) {
+  return type === "trivia"
+    ? { list: "/trivia-posts", add: "/trivia-posts/add", edit: "/trivia-posts/edit", details: "/trivia-posts/details" }
+    : { list: "/posts", add: "/posts/add", edit: "/posts/edit", details: "/posts/details" };
+}
+
+export function PostList({ defaultType = "blog" }: { defaultType?: ContentType }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [status, setStatus] = useState<boolean | string>("All");
@@ -28,6 +63,20 @@ export function PostList() {
     totalRecords: 0,
     totalPages: 0,
   });
+  const labels = contentListLabels[defaultType];
+  const paths = contentPaths(defaultType);
+
+  useEffect(() => {
+    setRecords([]);
+    setSearchQuery("");
+    setStatus("All");
+    setPagination((old) => ({
+      ...old,
+      page: 1,
+      totalRecords: 0,
+      totalPages: 0,
+    }));
+  }, [defaultType]);
 
   // Extend the TableInstance type
   type TableInstanceWithRowSelect<T extends object> = TableInstance<T> & {
@@ -39,19 +88,23 @@ export function PostList() {
     function () {
       async function getData() {
         setLoading(true);
-        let url = `/blogs?page=${pagination.page}&limit=${pagination.limit}`;
-        if (searchQuery) url += `&searchQuery=${searchQuery}`;
-        if (status) url += `&status=${status}`;
+        const params = new URLSearchParams({
+          page: String(pagination.page),
+          limit: String(pagination.limit),
+          type: defaultType,
+        });
+        if (searchQuery.trim()) params.set("searchQuery", searchQuery.trim());
+        if (status) params.set("status", String(status));
 
-        const apiResponse = await get(url, true);
+        const apiResponse = await get(`/blogs?${params.toString()}`, true);
         if (apiResponse?.status == 200) {
           setRecords(apiResponse.body);
-          setPagination({
-            ...pagination,
+          setPagination((old) => ({
+            ...old,
             page: apiResponse?.page as number,
             totalPages: apiResponse?.totalPages as number,
             totalRecords: apiResponse?.totalRecords as number,
-          });
+          }));
         } else {
           setRecords([]);
           toast.error(apiResponse?.message);
@@ -61,7 +114,7 @@ export function PostList() {
 
       getData();
     },
-    [pagination.page, pagination.limit, searchQuery, needReload, status],
+    [defaultType, pagination.page, pagination.limit, searchQuery, needReload, status],
   );
 
   type Record = {
@@ -169,7 +222,7 @@ export function PostList() {
               <Link
                 className="post-icon-action"
                 to={{
-                  pathname: `/posts/edit/${value}`,
+                  pathname: `${paths.edit}/${value}`,
                 }}
                 title="Edit post"
               >
@@ -179,7 +232,7 @@ export function PostList() {
               <Link
                 className="post-icon-action post-icon-action--view"
                 to={{
-                  pathname: `/posts/details/${value}`,
+                  pathname: `${paths.details}/${value}`,
                 }}
                 title="View post"
               >
@@ -206,7 +259,7 @@ export function PostList() {
         },
       },
     ],
-    [],
+    [paths.details, paths.edit],
   );
 
   const data = React.useMemo(() => {
@@ -309,17 +362,17 @@ export function PostList() {
         <div>
           <div className="post-page-header__actions">
             <GoBackButton />
-            <span className="post-page-eyebrow">IFMA Workspace</span>
+            <span className="post-page-eyebrow">{labels.eyebrow}</span>
           </div>
-          <h1>Posts</h1>
-          <p>Manage blog posts, visibility, and publishing status.</p>
+          <h1>{labels.title}</h1>
+          <p>{labels.description}</p>
         </div>
         <Link
-          to={"/posts/add"}
+          to={paths.add}
           type="button"
           className="btn btn-primary post-primary-action"
         >
-          Add Post
+          {labels.addText}
         </Link>
       </div>
 
@@ -330,7 +383,7 @@ export function PostList() {
               <div className="post-search-wrap">
                 <i className="ti-search"></i>
                 <input
-                  placeholder="Search posts"
+                  placeholder={labels.searchPlaceholder}
                   className="form-control"
                   type="search"
                   onChange={(evt: React.ChangeEvent<HTMLInputElement>) =>
@@ -380,7 +433,7 @@ export function PostList() {
                   pagination={pagination}
                   setPagination={setPagination}
                   tableName={"table-to-xls"}
-                  csvFileName={"posts"}
+                  csvFileName={labels.csvFileName}
                 />
               </div>
             </div>

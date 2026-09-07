@@ -11,6 +11,7 @@ import {
   postSchema,
   PostValues,
   postInitialValues,
+  ContentType,
 } from "../../validationSchemas/postSchema";
 
 import { useEffect, useState } from "react";
@@ -29,8 +30,35 @@ import { addUrlToFile } from "../../utills/addUrlToFile";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 
-export function AddPost() {
+const contentFormLabels: Record<ContentType, {
+  plural: string;
+  singular: string;
+  eyebrow: string;
+  description: string;
+  addPath: string;
+  library: string;
+}> = {
+  blog: {
+    plural: "Blogs",
+    singular: "Blog",
+    eyebrow: "Content",
+    description: "Create a blog post with publishing details, cover media, and SEO metadata.",
+    addPath: "/posts",
+    library: "blog library",
+  },
+  trivia: {
+    plural: "Trivia",
+    singular: "Trivia",
+    eyebrow: "Content",
+    description: "Create a trivia story with publishing details, cover media, and SEO metadata.",
+    addPath: "/trivia-posts",
+    library: "trivia library",
+  },
+};
+
+export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType }) {
   const navigate = useNavigate();
+  const labels = contentFormLabels[defaultType];
   const [loading, setLoading] = useState<boolean>(false);
   const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -69,7 +97,7 @@ export function AddPost() {
       }
       setLoading(false);
     },
-    initialValues: postInitialValues,
+    initialValues: { ...postInitialValues, type: defaultType },
     validationSchema: postSchema,
   });
 
@@ -282,10 +310,10 @@ export function AddPost() {
         <div>
           <div className="post-form-header__actions">
             <GoBackButton />
-            <span className="post-page-eyebrow">Blog posts</span>
+            <span className="post-page-eyebrow">{labels.eyebrow}</span>
           </div>
-          <h1>Add Post</h1>
-          <p>Create a blog post with publishing details, cover media, and SEO metadata.</p>
+          <h1>Add {labels.singular}</h1>
+          <p>{labels.description}</p>
         </div>
         <div className="post-form-header__meta">
           <span className="post-form-pill">New post</span>
@@ -307,7 +335,7 @@ export function AddPost() {
                 <div className="row">
                   <div className="form-group col-md-6">
                     <InputBox
-                      label="Post Title"
+                      label={`${labels.singular} Title`}
                       name="title"
                       handleBlur={handleBlur}
                       handleChange={handleTitleChange}
@@ -322,7 +350,7 @@ export function AddPost() {
 
                   <div className="form-group col-md-6">
                     <InputBox
-                      label="Post Slug"
+                      label={`${labels.singular} Slug`}
                       name="slug"
                       handleBlur={handleBlur}
                       handleChange={handleChange}
@@ -393,7 +421,7 @@ export function AddPost() {
                   <div className="form-group col-md-6">
                     <label className="post-form-field-label">Status</label>
                     <div className="post-form-status-options">
-                      <label className="post-form-status-option">
+                      <label className="post-form-status-option" title="Visible on the website">
                         <input
                           type="radio"
                           name="status"
@@ -405,10 +433,9 @@ export function AddPost() {
                         />
                         <span>
                           <strong>Publish</strong>
-                          <small>Visible on the website</small>
                         </span>
                       </label>
-                      <label className="post-form-status-option">
+                      <label className="post-form-status-option" title="Keep hidden for now">
                         <input
                           type="radio"
                           name="status"
@@ -420,7 +447,6 @@ export function AddPost() {
                         />
                         <span>
                           <strong>Draft</strong>
-                          <small>Keep hidden for now</small>
                         </span>
                       </label>
                     </div>
@@ -429,6 +455,20 @@ export function AddPost() {
                         {errors.status}
                       </p>
                     ) : null}
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label className="post-form-field-label">Featured</label>
+                    <label className="post-form-status-option" title="Show in featured content sections">
+                      <input
+                        checked={values.featured}
+                        name="featured"
+                        onChange={(event) => setFieldValue("featured", event.target.checked)}
+                        type="checkbox"
+                      />
+                      <span>
+                        <strong>Feature this {labels.singular.toLowerCase()}</strong>
+                      </span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -506,7 +546,7 @@ export function AddPost() {
                 <div className="post-form-section-heading">
                   <div>
                     <span>Editor</span>
-                    <h2>Post content</h2>
+                    <h2>{labels.singular} content</h2>
                   </div>
                 </div>
 
@@ -589,10 +629,10 @@ export function AddPost() {
 
             <div className="post-form-sticky-actions">
               <div>
-                <strong>Add Post</strong>
-                <span>Save this post to your blog library.</span>
+                <strong>Add {labels.singular}</strong>
+                <span>Save this item to your {labels.library}.</span>
               </div>
-              <SubmitButton loading={loading} text="Add Post" />
+              <SubmitButton loading={loading} text={`Add ${labels.singular}`} />
             </div>
           </main>
 
@@ -607,8 +647,8 @@ export function AddPost() {
                     <i className="fa fa-image"></i>
                   )}
                 </div>
-                <h2>{values.title || "Post title"}</h2>
-                <p>{values.excerpt || "Post excerpt preview will appear here."}</p>
+                <h2>{values.title || `${labels.singular} title`}</h2>
+                <p>{values.excerpt || `${labels.singular} excerpt preview will appear here.`}</p>
                 <div className="post-form-preview-meta">
                   <span>{values.category?.label || "Category"}</span>
                   <strong>{values.status == "true" ? "Published" : "Draft"}</strong>

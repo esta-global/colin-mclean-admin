@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router-dom";
 import moment from "moment";
 import DOMPurify from "dompurify";
 import { addUrlToFile } from "../../utills/addUrlToFile";
+import { ContentType } from "../../validationSchemas/postSchema";
 
 function InfoRow({ label, value }: { label: string; value?: ReactNode }) {
   return (
@@ -15,8 +16,22 @@ function InfoRow({ label, value }: { label: string; value?: ReactNode }) {
   );
 }
 
-export function PostDetails() {
+const detailLabels: Record<ContentType, { singular: string; editPath: string; description: string }> = {
+  blog: {
+    singular: "Blog",
+    editPath: "/posts/edit",
+    description: "Review the public preview, publishing details, and SEO metadata.",
+  },
+  trivia: {
+    singular: "Trivia",
+    editPath: "/trivia-posts/edit",
+    description: "Review the trivia preview, publishing details, and SEO metadata.",
+  },
+};
+
+export function PostDetails({ defaultType = "blog" }: { defaultType?: ContentType }) {
   const { id } = useParams();
+  const labels = detailLabels[defaultType];
   const [loading, setLoading] = useState<boolean>(true);
   const [blogDetails, setBlogDetails] = useState<any>({});
 
@@ -54,13 +69,13 @@ export function PostDetails() {
         <div>
           <div className="post-detail-header__actions">
             <GoBackButton />
-            <span className="post-page-eyebrow">Blog posts</span>
+            <span className="post-page-eyebrow">Content</span>
           </div>
-          <h1>Post Details</h1>
-          <p>Review the public preview, publishing details, and SEO metadata.</p>
+          <h1>{labels.singular} Details</h1>
+          <p>{labels.description}</p>
         </div>
-        <Link to={`/posts/edit/${id}`} className="btn btn-primary post-primary-action">
-          Edit Post
+        <Link to={`${labels.editPath}/${id}`} className="btn btn-primary post-primary-action">
+          Edit {labels.singular}
         </Link>
       </div>
 

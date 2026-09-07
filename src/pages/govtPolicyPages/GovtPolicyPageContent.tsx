@@ -2,6 +2,8 @@ import { FormikHelpers, getIn, useFormik } from "formik";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 
 import { GoBackButton, OverlayLoading, Pagination, SubmitButton, TextareaBox } from "../../components";
 import { API_URL } from "../../constants";
@@ -24,6 +26,42 @@ type ApiBody = Partial<GovtPolicyPageValues> & {
 };
 
 type MediaRecord = { _id?: string; filename: string };
+
+class MediaUploadAdapter {
+  loader: any;
+
+  constructor(loader: any) {
+    this.loader = loader;
+  }
+
+  async upload() {
+    const file = await this.loader.file;
+    const formData = new FormData();
+    formData.append("files", file);
+
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${API_URL}/media`, {
+      method: "POST",
+      body: formData,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const apiData = await response.json();
+
+    if (apiData?.status !== 200 || !apiData?.body?.[0]?.filename) {
+      throw new Error(apiData?.message || "Unable to upload image");
+    }
+
+    return {
+      default: addUrlToFile(apiData.body[0].filename),
+    };
+  }
+
+  abort() {}
+}
+
+function mediaUploadAdapterPlugin(editor: any) {
+  editor.plugins.get("FileRepository").createUploadAdapter = (loader: any) => new MediaUploadAdapter(loader);
+}
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -69,6 +107,7 @@ function normalizeValues(values: GovtPolicyPageValues): GovtPolicyPageValues {
     metaDescription: "",
     keywords: [],
   };
+  const richContent = values.richContent || { html: "" };
 
   return {
     ...values,
@@ -85,6 +124,9 @@ function normalizeValues(values: GovtPolicyPageValues): GovtPolicyPageValues {
         label: (ds.cta?.label || "").trim(),
         url: (ds.cta?.url || "").trim(),
       },
+    },
+    richContent: {
+      html: richContent.html || "",
     },
     seo: {
       metaTitle: seo.metaTitle || "",
@@ -107,6 +149,7 @@ export function GovtPolicyPageContent() {
   const params = useParams();
   const slug = params.slug || "bis-specifications";
   const pageConfig = govtPolicyPages.find((page) => page.slug === slug) || govtPolicyPages[0];
+  const isRichTextPage = pageConfig.slug === "atmanirbhar";
   const emptyValues = useMemo(() => createGovtPolicyPageInitialValues(pageConfig.label, pageConfig.slug), [pageConfig.label, pageConfig.slug]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -116,7 +159,7 @@ export function GovtPolicyPageContent() {
   const [records, setRecords] = useState<MediaRecord[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 60, totalRecords: 0, totalPages: 0 });
 
-  const { values, errors, touched, handleBlur, handleChange, handleSubmit, setFieldValue, setValues } = useFormik({
+  const { values, errors, touched, handleBlur, handleChange, handleSubmit, setFieldValue, setFieldTouched, setValues } = useFormik({
     initialValues: emptyValues,
     enableReinitialize: true,
     validationSchema: govtPolicyPageSchema,
@@ -231,6 +274,15 @@ export function GovtPolicyPageContent() {
       toast.error(error instanceof Error ? error.message : "Unable to upload image");
     }
     event.target.value = "";
+  }
+
+  function handleSelectMedia(filename: string) {
+    if (selectedFileFor === "__richContentImage") {
+      const imageHtml = `<p><img src="${addUrlToFile(filename)}" alt="" /></p>`;
+      void setFieldValue("richContent.html", `${values.richContent?.html || ""}${imageHtml}`);
+      return;
+    }
+    void setFieldValue(selectedFileFor, filename);
   }
 
   return (
@@ -515,79 +567,121 @@ export function GovtPolicyPageContent() {
                   </div>
                 </section>
 
-                <section className="card about-page-card">
-                  <div className="card-body">
-                    <SectionHeading eyebrow="Govt Policies" title="Content Section" />
-                    <input className="form-control mb-3" name="detailsSection.heading" onBlur={handleBlur} onChange={handleChange} placeholder="Page heading" value={values.detailsSection.heading} />
-                    <div className="industry-editor-list">
-                      <div className="industry-editor-list__head">
-                        <strong>Intro Paragraphs</strong>
-                        <button onClick={() => setFieldValue("detailsSection.introParagraphs", [...values.detailsSection.introParagraphs, ""])} type="button">+ Add Paragraph</button>
+                {isRichTextPage ? (
+                  <section className="card about-page-card">
+                    <div className="card-body">
+                      <SectionHeading eyebrow="Govt Policies" title="Rich Content Section" />
+                      <div className="d-flex justify-content-end mb-2">
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          data-bs-target="#selectGovtPolicyImageFileModal"
+                          data-bs-toggle="modal"
+                          onClick={() => setSelectedFileFor("__richContentImage")}
+                          type="button"
+                        >
+                          <i className="fa fa-image me-1"></i>
+                          Insert Image
+                        </button>
                       </div>
-                      {values.detailsSection.introParagraphs.map((paragraph, index) => (
-                        <div className="industry-editor-row" key={index}>
-                          <textarea className="form-control" name={`detailsSection.introParagraphs.${index}`} onBlur={handleBlur} onChange={handleChange} placeholder="Paragraph text" value={paragraph} />
-                          <button onClick={() => setFieldValue("detailsSection.introParagraphs", values.detailsSection.introParagraphs.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
-                        </div>
-                      ))}
+                      <div className="terms-editor-shell">
+                        <CKEditor
+                          editor={ClassicEditor as any}
+                          config={{
+                            extraPlugins: [mediaUploadAdapterPlugin],
+                          }}
+                          data={values.richContent?.html || ""}
+                          onChange={(__, editor) => {
+                            setFieldValue("richContent.html", editor.getData());
+                          }}
+                          onError={(error) => {
+                            toast.error(error?.message || "Unable to upload image");
+                          }}
+                          onBlur={() => {
+                            setFieldTouched("richContent.html", true);
+                          }}
+                          onFocus={() => {}}
+                          id="richContentHtml"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </section>
-
-                <section className="card about-page-card">
-                  <div className="card-body">
-                    <SectionHeading eyebrow="Govt Policies" title="Bullet Section" />
-                    <input className="form-control mb-3" name="detailsSection.bulletHeading" onBlur={handleBlur} onChange={handleChange} placeholder="BEE performs regulatory and promotional functions including:" value={values.detailsSection.bulletHeading} />
-                    <div className="industry-editor-list">
-                      <div className="industry-editor-list__head">
-                        <strong>Bullet Points</strong>
-                        <button onClick={() => setFieldValue("detailsSection.bullets", [...values.detailsSection.bullets, ""])} type="button">+ Add Bullet</button>
-                      </div>
-                      {values.detailsSection.bullets.map((bullet, index) => (
-                        <div className="industry-editor-row" key={index}>
-                          <textarea className="form-control" name={`detailsSection.bullets.${index}`} onBlur={handleBlur} onChange={handleChange} placeholder="Bullet text" value={bullet} />
-                          <button onClick={() => setFieldValue("detailsSection.bullets", values.detailsSection.bullets.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-
-                <section className="card about-page-card">
-                  <div className="card-body">
-                    <SectionHeading eyebrow="Govt Policies" title="Bottom Paragraphs" />
-                    <div className="industry-editor-list">
-                      <div className="industry-editor-list__head">
-                        <strong>Bottom Paragraphs</strong>
-                        <button onClick={() => setFieldValue("detailsSection.bottomParagraphs", [...values.detailsSection.bottomParagraphs, { text: "", isItalic: false }])} type="button">+ Add Paragraph</button>
-                      </div>
-                      {values.detailsSection.bottomParagraphs.map((paragraph, index) => (
-                        <div className="industry-editor-row" key={index}>
-                          <div className="w-100">
-                            <textarea className="form-control" name={`detailsSection.bottomParagraphs.${index}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Paragraph text" value={paragraph.text} />
-                            <label className="d-flex align-items-center gap-2 mt-2 mb-0">
-                              <input checked={paragraph.isItalic} name={`detailsSection.bottomParagraphs.${index}.isItalic`} onChange={(event) => setFieldValue(`detailsSection.bottomParagraphs.${index}.isItalic`, event.target.checked)} type="checkbox" />
-                              Italic text
-                            </label>
+                  </section>
+                ) : (
+                  <>
+                    <section className="card about-page-card">
+                      <div className="card-body">
+                        <SectionHeading eyebrow="Govt Policies" title="Content Section" />
+                        <input className="form-control mb-3" name="detailsSection.heading" onBlur={handleBlur} onChange={handleChange} placeholder="Page heading" value={values.detailsSection.heading} />
+                        <div className="industry-editor-list">
+                          <div className="industry-editor-list__head">
+                            <strong>Intro Paragraphs</strong>
+                            <button onClick={() => setFieldValue("detailsSection.introParagraphs", [...values.detailsSection.introParagraphs, ""])} type="button">+ Add Paragraph</button>
                           </div>
-                          <button onClick={() => setFieldValue("detailsSection.bottomParagraphs", values.detailsSection.bottomParagraphs.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
+                          {values.detailsSection.introParagraphs.map((paragraph, index) => (
+                            <div className="industry-editor-row" key={index}>
+                              <textarea className="form-control" name={`detailsSection.introParagraphs.${index}`} onBlur={handleBlur} onChange={handleChange} placeholder="Paragraph text" value={paragraph} />
+                              <button onClick={() => setFieldValue("detailsSection.introParagraphs", values.detailsSection.introParagraphs.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-
-                <section className="card about-page-card">
-                  <div className="card-body">
-                    <SectionHeading eyebrow="Govt Policies" title="CTA Button" />
-                    <div className="industry-link-grid">
-                      <div className="industry-link-card">
-                        <input className="form-control" name="detailsSection.cta.label" onBlur={handleBlur} onChange={handleChange} placeholder="Read more on this BIS link" value={values.detailsSection.cta.label} />
-                        <input className="form-control" name="detailsSection.cta.url" onBlur={handleBlur} onChange={handleChange} placeholder="URL" value={values.detailsSection.cta.url} />
                       </div>
-                    </div>
-                  </div>
-                </section>
+                    </section>
+
+                    <section className="card about-page-card">
+                      <div className="card-body">
+                        <SectionHeading eyebrow="Govt Policies" title="Bullet Section" />
+                        <input className="form-control mb-3" name="detailsSection.bulletHeading" onBlur={handleBlur} onChange={handleChange} placeholder="BEE performs regulatory and promotional functions including:" value={values.detailsSection.bulletHeading} />
+                        <div className="industry-editor-list">
+                          <div className="industry-editor-list__head">
+                            <strong>Bullet Points</strong>
+                            <button onClick={() => setFieldValue("detailsSection.bullets", [...values.detailsSection.bullets, ""])} type="button">+ Add Bullet</button>
+                          </div>
+                          {values.detailsSection.bullets.map((bullet, index) => (
+                            <div className="industry-editor-row" key={index}>
+                              <textarea className="form-control" name={`detailsSection.bullets.${index}`} onBlur={handleBlur} onChange={handleChange} placeholder="Bullet text" value={bullet} />
+                              <button onClick={() => setFieldValue("detailsSection.bullets", values.detailsSection.bullets.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="card about-page-card">
+                      <div className="card-body">
+                        <SectionHeading eyebrow="Govt Policies" title="Bottom Paragraphs" />
+                        <div className="industry-editor-list">
+                          <div className="industry-editor-list__head">
+                            <strong>Bottom Paragraphs</strong>
+                            <button onClick={() => setFieldValue("detailsSection.bottomParagraphs", [...values.detailsSection.bottomParagraphs, { text: "", isItalic: false }])} type="button">+ Add Paragraph</button>
+                          </div>
+                          {values.detailsSection.bottomParagraphs.map((paragraph, index) => (
+                            <div className="industry-editor-row" key={index}>
+                              <div className="w-100">
+                                <textarea className="form-control" name={`detailsSection.bottomParagraphs.${index}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Paragraph text" value={paragraph.text} />
+                                <label className="d-flex align-items-center gap-2 mt-2 mb-0">
+                                  <input checked={paragraph.isItalic} name={`detailsSection.bottomParagraphs.${index}.isItalic`} onChange={(event) => setFieldValue(`detailsSection.bottomParagraphs.${index}.isItalic`, event.target.checked)} type="checkbox" />
+                                  Italic text
+                                </label>
+                              </div>
+                              <button onClick={() => setFieldValue("detailsSection.bottomParagraphs", values.detailsSection.bottomParagraphs.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="card about-page-card">
+                      <div className="card-body">
+                        <SectionHeading eyebrow="Govt Policies" title="CTA Button" />
+                        <div className="industry-link-grid">
+                          <div className="industry-link-card">
+                            <input className="form-control" name="detailsSection.cta.label" onBlur={handleBlur} onChange={handleChange} placeholder="Read more on this BIS link" value={values.detailsSection.cta.label} />
+                            <input className="form-control" name="detailsSection.cta.url" onBlur={handleBlur} onChange={handleChange} placeholder="URL" value={values.detailsSection.cta.url} />
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+                  </>
+                )}
               </>
             )}
 
@@ -635,7 +729,7 @@ export function GovtPolicyPageContent() {
               <div className="row mb-2 gy-2 media-list-section">
                 {records.map((item) => (
                   <div className="col-md-2 col-4" key={item._id || item.filename}>
-                    <button className="about-page-media-card" data-bs-dismiss="modal" onClick={() => setFieldValue(selectedFileFor, item.filename)} type="button">
+                    <button className="about-page-media-card" data-bs-dismiss="modal" onClick={() => handleSelectMedia(item.filename)} type="button">
                       <img src={addUrlToFile(item.filename)} alt="" />
                     </button>
                   </div>
