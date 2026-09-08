@@ -13,13 +13,45 @@ export function Sidebar() {
     "/govt-policies/quality-control-order",
     "/govt-policies/bee-star-rating",
     "/govt-policies/energy-conservation",
+    "/govt-policies/atmanirbhar",
     "/govt-policies/govt-engagements",
   ];
   const [govtPoliciesOpen, setGovtPoliciesOpen] = useState(
     govtPolicyPaths.includes(location.pathname),
   );
-  const memberListPaths = ["/member-list/primary", "/member-list/associate"];
+  const mediaPaths = ["/media", "/media/add", "/media/press-releases", "/media/images", "/media/videos"];
+  const [mediaOpen, setMediaOpen] = useState(mediaPaths.includes(location.pathname));
+  const contentPaths = [
+    "/blogCategories",
+    "/blogCategories/add",
+    "/authors",
+    "/authors/add",
+    "/posts",
+    "/posts/add",
+    "/trivia-posts",
+    "/trivia-posts/add",
+  ];
+  const isContentPath = contentPaths.includes(location.pathname) ||
+    location.pathname.startsWith("/blogCategories/edit/") ||
+    location.pathname.startsWith("/authors/edit/") ||
+    location.pathname.startsWith("/posts/edit/") ||
+    location.pathname.startsWith("/posts/details/") ||
+    location.pathname.startsWith("/trivia-posts/edit/") ||
+    location.pathname.startsWith("/trivia-posts/details/");
+  const [contentOpen, setContentOpen] = useState(isContentPath);
+  const memberListPaths = [
+    "/member-list/primary",
+    "/member-list/associate",
+    "/membership-pages/types-of-membership",
+    "/membership-pages/become-a-member",
+  ];
   const [membersOpen, setMembersOpen] = useState(memberListPaths.includes(location.pathname));
+  const isInquiryPath =
+    location.pathname === "/inquiries" ||
+    location.pathname.startsWith("/inquiries/") ||
+    location.pathname === "/admin/contact-inquiries" ||
+    location.pathname.startsWith("/admin/contact-inquiries/");
+  const [inquiriesOpen, setInquiriesOpen] = useState(isInquiryPath);
 
   useEffect(() => {
     if (
@@ -31,8 +63,17 @@ export function Sidebar() {
     if (govtPolicyPaths.includes(location.pathname)) {
       setGovtPoliciesOpen(true);
     }
+    if (mediaPaths.includes(location.pathname)) {
+      setMediaOpen(true);
+    }
+    if (isContentPath) {
+      setContentOpen(true);
+    }
     if (memberListPaths.includes(location.pathname)) {
       setMembersOpen(true);
+    }
+    if (isInquiryPath) {
+      setInquiriesOpen(true);
     }
   }, [location.pathname]);
 
@@ -109,11 +150,43 @@ export function Sidebar() {
           </Link>
         </li>
 
-        <li className={`nav-item ${handleActiveMenu(["/media"])}`}>
-          <Link className="nav-link" to="/media">
+        <li className={`nav-item ${handleActiveMenu(mediaPaths)}`}>
+          <a
+            className="nav-link"
+            data-bs-toggle="collapse"
+            href="#mediaPages"
+            aria-expanded={mediaOpen}
+            aria-controls="mediaPages"
+            onClick={() => setMediaOpen((isOpen) => !isOpen)}
+          >
             <i className="ti-image menu-icon"></i>
             <span className="menu-title">Media</span>
-          </Link>
+            <i className="menu-arrow"></i>
+          </a>
+          <div className={`collapse ${mediaOpen ? "show" : ""}`} id="mediaPages">
+            <ul className="nav flex-column sub-menu">
+              <li className="nav-item">
+                <Link className={`nav-link ${handleActiveLink("/media")}`} to="/media">
+                  Media Library
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className={`nav-link ${handleActiveLink("/media/press-releases")}`} to="/media/press-releases">
+                  Press Releases Page
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className={`nav-link ${handleActiveLink("/media/images")}`} to="/media/images">
+                  Media Images Page
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className={`nav-link ${handleActiveLink("/media/videos")}`} to="/media/videos">
+                  Videos Page
+                </Link>
+              </li>
+            </ul>
+          </div>
         </li>
 
         <li className={`nav-item ${handleActiveMenu(["/listings"])}`}>
@@ -154,6 +227,22 @@ export function Sidebar() {
                   Associate Member List
                 </Link>
               </li>
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${handleActiveLink("/membership-pages/types-of-membership")}`}
+                  to="/membership-pages/types-of-membership"
+                >
+                  Types Of Membership
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${handleActiveLink("/membership-pages/become-a-member")}`}
+                  to="/membership-pages/become-a-member"
+                >
+                  Become A Member
+                </Link>
+              </li>
             </ul>
           </div>
         </li>
@@ -165,27 +254,42 @@ export function Sidebar() {
           </Link>
         </li>
 
-        {/* Blog */}
+        {/* Content */}
         <li
-          className={`nav-item ${handleActiveMenu([
-            "/blogCategories",
-            "/authors",
-            "/posts",
-          ])}`}
+          className={`nav-item ${isContentPath ? "active" : ""}`}
         >
           <a
-            className="nav-link dnone"
+            className="nav-link"
             data-bs-toggle="collapse"
             href="#blog"
-            aria-expanded="false"
+            aria-expanded={contentOpen}
             aria-controls="blog"
+            onClick={() => setContentOpen((isOpen) => !isOpen)}
           >
             <i className="ti-layers menu-icon"></i>
-            <span className="menu-title">Blog</span>
+            <span className="menu-title">Content</span>
             <i className="menu-arrow"></i>
           </a>
-          <div className="collapse" id="blog">
+          <div className={`collapse ${contentOpen ? "show" : ""}`} id="blog">
             <ul className="nav flex-column sub-menu">
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${handleActiveLink("/posts")}`}
+                  to="/posts"
+                >
+                  Blogs
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${handleActiveLink("/trivia-posts")}`}
+                  to="/trivia-posts"
+                >
+                  Trivia
+                </Link>
+              </li>
+
               <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink("/blogCategories")}`}
@@ -201,15 +305,6 @@ export function Sidebar() {
                   to="/authors"
                 >
                   Authors
-                </Link>
-              </li>
-
-              <li className="nav-item">
-                <Link
-                  className={`nav-link ${handleActiveLink("/posts")}`}
-                  to="/posts"
-                >
-                  Posts
                 </Link>
               </li>
             </ul>
@@ -290,6 +385,7 @@ export function Sidebar() {
         <li
           className={`dnone nav-item ${handleActiveMenu([
             "/homepage",
+            "/header-management",
             "/aboutpage",
             "/executive-council-page",
             "/executive-council-members",
@@ -297,6 +393,7 @@ export function Sidebar() {
             "/sub-committees-page",
             "/industry-details-page",
             "/report-page",
+            "/past-events-page",
             "/contactpage",
             "/admin/contact-page",
             "/blogpage",
@@ -325,6 +422,15 @@ export function Sidebar() {
           </a>
           <div className="collapse" id="pages">
             <ul className="nav flex-column sub-menu">
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${handleActiveLink("/header-management")}`}
+                  to="/header-management"
+                >
+                  Header Management
+                </Link>
+              </li>
+
               <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink("/homepage")}`}
@@ -424,6 +530,15 @@ export function Sidebar() {
 
               <li className="nav-item">
                 <Link
+                  className={`nav-link ${handleActiveLink("/past-events-page")}`}
+                  to="/past-events-page"
+                >
+                  Past Events Page
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link
                   className={`nav-link ${handleActiveLink("/admin/contact-page")}`}
                   to="/admin/contact-page"
                 >
@@ -516,7 +631,7 @@ export function Sidebar() {
                 <Link
                   className={`nav-link ${handleActiveLink("/faqsCategory")}`}
                   to="/faqsCategory"
-                >
+                  >
                   Resource FaQs Category
                 </Link>
               </li>
@@ -556,14 +671,7 @@ export function Sidebar() {
                   BIS Specifications
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link
-                  className={`nav-link ${handleActiveLink("/govt-policies/quality-control-order")}`}
-                  to="/govt-policies/quality-control-order"
-                >
-                  Quality Control Order
-                </Link>
-              </li>
+             
                   <li className="nav-item">
                     <Link
                       className={`nav-link ${handleActiveLink("/govt-policies/bee-star-rating")}`}
@@ -572,12 +680,13 @@ export function Sidebar() {
                       BEE Star Rating
                     </Link>
                   </li>
+              
               <li className="nav-item">
                 <Link
-                  className={`nav-link ${handleActiveLink("/govt-policies/energy-conservation")}`}
-                  to="/govt-policies/energy-conservation"
+                  className={`nav-link ${handleActiveLink("/govt-policies/atmanirbhar")}`}
+                  to="/govt-policies/atmanirbhar"
                 >
-                  Energy Conservation
+                  Atmanirbhar
                 </Link>
               </li>
               <li className="nav-item">
@@ -626,35 +735,30 @@ export function Sidebar() {
 
         {/* Inquiries */}
         <li
-          className={`nav-item ${handleActiveMenu([
-            "/newsletters",
-            "/inquiries",
-            "/admin/contact-inquiries",
-            "/notifyMe",
-            "orders",
-          ])}`}
+          className={`nav-item ${isInquiryPath ? "active" : ""}`}
         >
           <a
             className="nav-link"
             data-bs-toggle="collapse"
             href="#inquiries"
-            aria-expanded="false"
+            aria-expanded={inquiriesOpen}
             aria-controls="inquiries"
+            onClick={() => setInquiriesOpen((isOpen) => !isOpen)}
           >
             <i className="ti-email menu-icon"></i>
             <span className="menu-title">Inquiries</span>
             <i className="menu-arrow"></i>
           </a>
-          <div className="collapse" id="inquiries">
+          <div className={`collapse ${inquiriesOpen ? "show" : ""}`} id="inquiries">
             <ul className="nav flex-column sub-menu">
-              {/* <li className="nav-item">
+              <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink("/inquiries")}`}
                   to="/inquiries"
                 >
-                  Page Inquiry
+                  Page Inquiries
                 </Link>
-              </li> */}
+              </li>
               <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink(

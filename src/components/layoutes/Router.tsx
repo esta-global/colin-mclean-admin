@@ -29,6 +29,9 @@ export function Router() {
       <Route path="/media/add" element={<Pages.AddMedia />} />
       {/* <Route path="/categories/edit/:id" element={<Pages.EditCategory />} /> */}
       <Route path="/media" element={<Pages.MediaList />} />
+      <Route path="/media/press-releases" element={<Pages.PressReleasesPageContent />} />
+      <Route path="/media/images" element={<Pages.MediaImagesPageContent />} />
+      <Route path="/media/videos" element={<Pages.VideosPageContent />} />
       {/* Category */}
       <Route path="/categories/add" element={<Pages.AddCategory />} />
       <Route path="/categories/edit/:id" element={<Pages.EditCategory />} />
@@ -59,6 +62,7 @@ export function Router() {
       />
       {/* Blog Page */}
       <Route path="/blogpage" element={<Pages.BlogPageContent />} />
+      <Route path="/header-management" element={<Pages.HeaderManagementContent />} />
       {/* Privacy Policy Page */}
       <Route
         path="/privacypolicy"
@@ -95,8 +99,16 @@ export function Router() {
         element={<Pages.ReportPageContent />}
       />
       <Route
+        path="/past-events-page"
+        element={<Pages.PastEventsPageContent />}
+      />
+      <Route
         path="/member-list/:kind"
         element={<Pages.MemberListPageContent />}
+      />
+      <Route
+        path="/membership-pages/:slug"
+        element={<Pages.MembershipPageContent />}
       />
       <Route
         path="/govt-policies/:slug"
@@ -225,7 +237,11 @@ export function Router() {
       <Route path="/posts/add" element={<Pages.AddPost />} />
       <Route path="/posts/details/:id" element={<Pages.PostDetails />} />
       <Route path="/posts/edit/:id" element={<Pages.EditPost />} />
-      <Route path="/posts" element={<Pages.PostList />} />
+      <Route path="/posts" element={<Pages.PostList key="blogs" />} />
+      <Route path="/trivia-posts/add" element={<Pages.AddPost defaultType="trivia" />} />
+      <Route path="/trivia-posts/details/:id" element={<Pages.PostDetails defaultType="trivia" />} />
+      <Route path="/trivia-posts/edit/:id" element={<Pages.EditPost defaultType="trivia" />} />
+      <Route path="/trivia-posts" element={<Pages.PostList key="trivia" defaultType="trivia" />} />
       {/* Promotion Text */}
       <Route path="/promotionTexts/add" element={<Pages.AddPromotionText />} />
       <Route

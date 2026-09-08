@@ -1,6 +1,9 @@
 import * as Yup from "yup";
 
+export type ContentType = "blog" | "trivia";
+
 export const postSchema = Yup.object({
+  type: Yup.string().oneOf(["blog", "trivia"]).required().label("Type"),
   title: Yup.string().required().label("Title"),
   slug: Yup.string().required().label("Slug"),
   content: Yup.string().required().label("Content"),
@@ -17,9 +20,11 @@ export const postSchema = Yup.object({
   metaKeywords: Yup.string().label("Meta Keywords"),
 
   status: Yup.string().label("Status"),
+  featured: Yup.boolean().label("Featured"),
 });
 
 export const postInitialValues: PostValues = {
+  type: "blog",
   title: "",
   slug: "",
   content: "",
@@ -35,9 +40,11 @@ export const postInitialValues: PostValues = {
   metaKeywords: "",
 
   status: "true",
+  featured: false,
 };
 
 export interface PostValues {
+  type: ContentType;
   title: string;
   slug: string;
   content: string;
@@ -61,4 +68,5 @@ export interface PostValues {
   metaKeywords: string;
 
   status: string;
+  featured: boolean;
 }
