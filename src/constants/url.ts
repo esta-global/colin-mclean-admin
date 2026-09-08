@@ -6,10 +6,10 @@ export const BASE_URL = "http://localhost:5173";
 
 export const API_URL =
   hostname == "localhost"
-    ? "http://127.0.0.1:5200/api/v1"
-    : "https://api.lamikraft.in/api/v1";
+    ? "http://localhost:5201/api/v1"
+    : "";
 
 export const FILE_URL =
   hostname == "localhost"
-    ? "http://127.0.0.1:5200/uploads"
-    : "https://api.lamikraft.in/uploads";
+    ? "http://localhost:5201/uploads"
+    : "";

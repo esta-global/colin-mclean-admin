@@ -20,8 +20,8 @@ export function InquiryList() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [status, setStatus] = useState<boolean | string>("");
-  const [position, setposition] = useState<boolean | string>("");
+  const [status, setStatus] = useState<string>("ALL");
+  const [position, setposition] = useState<string>("ALL");
   const [needReload, setNeedReload] = useState<boolean>(false);
   const [records, setRecords] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
@@ -36,21 +36,24 @@ export function InquiryList() {
     function () {
       async function getData() {
         setLoading(true);
-        let url = `/inquiries?page=${pagination.page}&limit=${pagination.limit}`;
-        if (searchQuery) url += `&searchQuery=${searchQuery}`;
-        if (status) url += `&inquiryStatus=${status}`;
-        if (position) url += `&position=${position}`;
+        const params = new URLSearchParams({
+          page: String(pagination.page),
+          limit: String(pagination.limit),
+          inquiryStatus: status,
+          position,
+        });
+        if (searchQuery.trim()) params.set("searchQuery", searchQuery.trim());
 
-        const apiResponse = await get(url, true);
+        const apiResponse = await get(`/inquiries?${params.toString()}`, true);
 
         if (apiResponse?.status == 200) {
           setRecords(apiResponse.body);
-          setPagination({
-            ...pagination,
+          setPagination((old) => ({
+            ...old,
             page: apiResponse?.page as number,
             totalPages: apiResponse?.totalPages as number,
             totalRecords: apiResponse?.totalRecords as number,
-          });
+          }));
         } else {
           setRecords([]);
           toast.error(apiResponse?.message);
@@ -76,7 +79,7 @@ export function InquiryList() {
     name: string;
     mobile: string;
     email: string;
-    position: "ALL" | "PRODUCT" | "CAREER" | "GENERAL";
+    position: "ALL" | "HOME_PAGE" | "CONTACT_PAGE" | "OTHER_PAGE" | "ADMIN" | "BECOME_DEALER_PAGE";
     createdAt: string;
     inquiryStatus: InquiryStatus;
     id: string;
@@ -249,12 +252,12 @@ export function InquiryList() {
   }
 
   // handleSetStatus
-  function handleSetStatus(evt: React.ChangeEvent<HTMLInputElement>) {
+  function handleSetStatus(evt: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setStatus(evt.target.value);
   }
 
   // handleSetposition
-  function handleSetposition(evt: React.ChangeEvent<HTMLInputElement>) {
+  function handleSetposition(evt: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setposition(evt.target.value);
   }
 
@@ -286,14 +289,18 @@ export function InquiryList() {
             <div className="card-body shadow-none">
               <div className="row mb-2 gy-2">
                 <div className="col-md-8">
-                  <input
-                    placeholder="Serach..."
-                    className="form-control py-2"
-                    type="serach"
-                    onChange={(evt: React.ChangeEvent<HTMLInputElement>) =>
-                      setSearchQuery(evt.target.value)
-                    }
-                  />
+                  <div className="post-search-wrap">
+                    <i className="ti-search"></i>
+                    <input
+                      placeholder="Search inquiries"
+                      className="form-control py-2"
+                      type="search"
+                      value={searchQuery}
+                      onChange={(evt: React.ChangeEvent<HTMLInputElement>) =>
+                        setSearchQuery(evt.target.value)
+                      }
+                    />
+                  </div>
                 </div>
                 <div className="col-md-4 d-flex gap-2 justify-content-md-end">
                   {/* <button className="btn p-2 bg-light border">
@@ -310,127 +317,20 @@ export function InquiryList() {
                     </button>
                   ) : null}
 
-                  <div className="dropdown">
-                    <a
-                      className="btn p-2 bg-light border"
-                      href="#"
-                      role="button"
-                      id="dropdownMenuLink"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <i className="ti-layers"></i>
-                    </a>
+                  <select className="form-control post-status-select" value={position} onChange={handleSetposition} aria-label="Filter inquiries by source">
+                    <option value="ALL">All sources</option>
+                    <option value="HOME_PAGE">Home page</option>
+                    <option value="CONTACT_PAGE">Contact page</option>
+                    <option value="OTHER_PAGE">Other page</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="BECOME_DEALER_PAGE">Become dealer page</option>
+                  </select>
 
-                    <ul
-                      className="dropdown-menu"
-                      aria-labelledby="dropdownMenuLink"
-                    >
-                      <li className="d-flex px-3 gap-2">
-                        <input
-                          type="radio"
-                          id="positionAll"
-                          value={"ALL"}
-                          name="position"
-                          onChange={handleSetposition}
-                        />
-                        <label htmlFor="positionAll">All</label>
-                      </li>
-                      <li className="d-flex px-3 gap-2">
-                        <input
-                          type="radio"
-                          id="positionHomepage"
-                          value={"HOME_PAGE"}
-                          name="position"
-                          onChange={handleSetposition}
-                        />
-                        <label htmlFor="positionHomepage">HOME PAGE</label>
-                      </li>
-                      <li className="d-flex px-3 gap-2">
-                        <input
-                          type="radio"
-                          id="positionContactpage"
-                          value={"CONTACT_PAGE"}
-                          name="position"
-                          onChange={handleSetposition}
-                        />
-                        <label htmlFor="positionContactpage">
-                          CONTACT PAGE
-                        </label>
-                      </li>
-                      {/* <li className="d-flex px-3 gap-2">
-                        <input
-                          type="radio"
-                          id="positionContactpage"
-                          value={"BECOME_DEALER_PAGE"}
-                          name="position"
-                          onChange={handleSetposition}
-                        />
-                        <label htmlFor="positionContactpage">
-                          BECOME A DEALER PAGE
-                        </label>
-                      </li> */}
-                      <li className="d-flex px-3 gap-2">
-                        <input
-                          type="radio"
-                          id="positionOtherpage"
-                          value={"OTHER_PAGE"}
-                          name="position"
-                          onChange={handleSetposition}
-                        />
-                        <label htmlFor="positionOtherpage">OTHER PAGE</label>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="dropdown">
-                    <a
-                      className="btn p-2 bg-light border"
-                      href="#"
-                      role="button"
-                      id="dropdownMenuLink"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <i className="ti-filter"></i>
-                    </a>
-
-                    <ul
-                      className="dropdown-menu"
-                      aria-labelledby="dropdownMenuLink"
-                    >
-                      <li className="d-flex px-3 gap-2">
-                        <input
-                          type="radio"
-                          id="all"
-                          value={"ALL"}
-                          name="status"
-                          onChange={handleSetStatus}
-                        />
-                        <label htmlFor="all">All</label>
-                      </li>
-                      <li className="d-flex px-3 gap-2">
-                        <input
-                          type="radio"
-                          id="active"
-                          value={"PENDING"}
-                          name="status"
-                          onChange={handleSetStatus}
-                        />
-                        <label htmlFor="active">Pending</label>
-                      </li>
-                      <li className="d-flex px-3 gap-2">
-                        <input
-                          type="radio"
-                          id="disabled"
-                          value={"RESOLVED"}
-                          name="status"
-                          onChange={handleSetStatus}
-                        />
-                        <label htmlFor="disabled">Resolved</label>
-                      </li>
-                    </ul>
-                  </div>
+                  <select className="form-control post-status-select" value={status} onChange={handleSetStatus} aria-label="Filter inquiries by status">
+                    <option value="ALL">All status</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="RESOLVED">Resolved</option>
+                  </select>
                 </div>
               </div>
               <div className="table-responsive">
@@ -447,7 +347,7 @@ export function InquiryList() {
                   pagination={pagination}
                   setPagination={setPagination}
                   tableName={"table-to-xls"}
-                  csvFileName={"coupons"}
+                  csvFileName={"inquiries"}
                 />
               </div>
             </div>

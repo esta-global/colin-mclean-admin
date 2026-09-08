@@ -8,7 +8,7 @@ import {
 import { useEffect, useState } from "react";
 import { get, put, remove } from "../../utills";
 import { toast } from "react-toastify";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { API_URL } from "../../constants";
 import { addUrlToFile } from "../../utills/addUrlToFile";
 
@@ -253,7 +253,6 @@ export function EditAuthor() {
                         />
                         <span>
                           <strong>Active</strong>
-                          <small>Can be assigned to posts</small>
                         </span>
                       </label>
                       <label className="author-form-status-option">
@@ -267,7 +266,6 @@ export function EditAuthor() {
                         />
                         <span>
                           <strong>Disabled</strong>
-                          <small>Hide from author lists</small>
                         </span>
                       </label>
                     </div>
@@ -277,63 +275,46 @@ export function EditAuthor() {
                       </p>
                     ) : null}
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="card author-form-card">
-              <div className="card-body">
-                <div className="author-form-section-heading">
-                  <div>
-                    <span>Photo</span>
-                    <h2>Profile photo</h2>
+                  <div className="col-md-12">
+                    <div className="author-form-inline-actions">
+                      <SubmitButton loading={loading} text="Update Author" />
+                    </div>
                   </div>
-                  <span className="author-form-chip">1080 x 1080 px</span>
                 </div>
-
-                <label htmlFor="imageFile" className="author-photo-uploader">
-                  <span className="author-photo-uploader__icon">
-                    <i className="fa fa-cloud-arrow-up"></i>
-                  </span>
-                  <strong>
-                    {uploadingPhoto ? "Uploading photo..." : "Replace photo"}
-                  </strong>
-                  <p className="mb-0">JPG, PNG, or WEBP square image.</p>
-                  <span className="author-photo-uploader__button">
-                    Choose file
-                  </span>
-                </label>
-
-                <input
-                  type="file"
-                  className="d-none"
-                  id="imageFile"
-                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                  onChange={handleUploadFile}
-                  disabled={uploadingPhoto}
-                />
-
-                {touched.profilePhoto && errors.profilePhoto ? (
-                  <p className="custom-form-error text-danger mt-2">
-                    {errors.profilePhoto}
-                  </p>
-                ) : null}
               </div>
             </div>
+
           </main>
 
           <aside className="author-form-side">
+            <input
+              type="file"
+              className="d-none"
+              id="imageFile"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              onChange={handleUploadFile}
+              disabled={uploadingPhoto}
+            />
             <div className="card author-form-card author-form-preview-card">
               <div className="card-body">
                 <span className="author-form-side-kicker">Preview</span>
-                <div className="author-form-preview-photo">
-                  {values.profilePhoto ? (
-                    <Link to={`${values.profilePhoto}`} target="_blank">
+                <div className="author-form-preview-photo-wrap">
+                  <button
+                    aria-label="Upload profile photo"
+                    className="author-form-preview-photo author-form-preview-photo--action"
+                    disabled={uploadingPhoto}
+                    onClick={() => document.getElementById("imageFile")?.click()}
+                    type="button"
+                  >
+                    {values.profilePhoto ? (
                       <img src={addUrlToFile(values.profilePhoto)} alt="" />
-                    </Link>
-                  ) : (
-                    <i className="fa fa-user"></i>
-                  )}
+                    ) : (
+                      <i className="fa fa-user"></i>
+                    )}
+                    <span className="author-photo-action-hint">
+                      <i className={uploadingPhoto ? "fa fa-spinner fa-spin" : "fa fa-camera"}></i>
+                    </span>
+                  </button>
                   {values.profilePhoto ? (
                     <button
                       type="button"
@@ -347,6 +328,11 @@ export function EditAuthor() {
                     </button>
                   ) : null}
                 </div>
+                {touched.profilePhoto && errors.profilePhoto ? (
+                  <p className="custom-form-error text-danger mt-2">
+                    {errors.profilePhoto}
+                  </p>
+                ) : null}
                 <h2>{values.name || "Author name"}</h2>
                 <p>{values.bio || "Author bio preview will appear here."}</p>
                 <div className="author-form-preview-meta">
@@ -378,14 +364,6 @@ export function EditAuthor() {
               </div>
             </div>
           </aside>
-        </div>
-
-        <div className="author-form-sticky-actions">
-          <div>
-            <strong>Edit Author</strong>
-            <span>Update this profile for blog post attribution.</span>
-          </div>
-          <SubmitButton loading={loading} text="Update Author" />
         </div>
       </form>
     </div>

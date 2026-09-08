@@ -10,6 +10,7 @@ import {
   postSchema,
   PostValues,
   postInitialValues,
+  ContentType,
 } from "../../validationSchemas/postSchema";
 import { useEffect, useState } from "react";
 import { get, post, put, remove } from "../../utills";
@@ -20,9 +21,30 @@ import { addUrlToFile } from "../../utills/addUrlToFile";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 
-export function EditPost() {
+const contentFormLabels: Record<ContentType, {
+  singular: string;
+  eyebrow: string;
+  description: string;
+  library: string;
+}> = {
+  blog: {
+    singular: "Blog",
+    eyebrow: "Content",
+    description: "Update blog publishing details, cover media, body content, and SEO metadata.",
+    library: "blog library",
+  },
+  trivia: {
+    singular: "Trivia",
+    eyebrow: "Content",
+    description: "Update trivia publishing details, cover media, body content, and SEO metadata.",
+    library: "trivia library",
+  },
+};
+
+export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }) {
   const navigate = useNavigate();
   const { id } = useParams();
+  const labels = contentFormLabels[defaultType];
   const [loading, setLoading] = useState<boolean>(false);
   const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -75,6 +97,8 @@ export function EditPost() {
         if (apiResponse?.status == 200) {
           const apiData = apiResponse.body;
           apiData.status = `${apiData.status}`;
+          apiData.type = apiData.type || defaultType;
+          apiData.featured = Boolean(apiData.featured);
 
           delete apiData.isDeleted;
           delete apiData.createdAt;
@@ -306,10 +330,10 @@ export function EditPost() {
         <div>
           <div className="post-form-header__actions">
             <GoBackButton />
-            <span className="post-page-eyebrow">Blog posts</span>
+            <span className="post-page-eyebrow">{labels.eyebrow}</span>
           </div>
-          <h1>Edit Post</h1>
-          <p>Update publishing details, cover media, body content, and SEO metadata.</p>
+          <h1>Edit {labels.singular}</h1>
+          <p>{labels.description}</p>
         </div>
         <div className="post-form-header__meta">
           <span className="post-form-pill">Existing post</span>
@@ -331,7 +355,7 @@ export function EditPost() {
                 <div className="row">
                   <div className="form-group col-md-6">
                     <InputBox
-                      label="Post Title"
+                      label={`${labels.singular} Title`}
                       name="title"
                       handleBlur={handleBlur}
                       handleChange={handleChange}
@@ -346,7 +370,7 @@ export function EditPost() {
 
                   <div className="form-group col-md-6">
                     <InputBox
-                      label="Post Slug"
+                      label={`${labels.singular} Slug`}
                       name="slug"
                       handleBlur={handleBlur}
                       handleChange={handleChange}
@@ -417,7 +441,7 @@ export function EditPost() {
                   <div className="form-group col-md-6">
                     <label className="post-form-field-label">Status</label>
                     <div className="post-form-status-options">
-                      <label className="post-form-status-option">
+                      <label className="post-form-status-option" title="Visible on the website">
                         <input
                           type="radio"
                           name="status"
@@ -429,10 +453,9 @@ export function EditPost() {
                         />
                         <span>
                           <strong>Publish</strong>
-                          <small>Visible on the website</small>
                         </span>
                       </label>
-                      <label className="post-form-status-option">
+                      <label className="post-form-status-option" title="Keep hidden for now">
                         <input
                           type="radio"
                           name="status"
@@ -444,7 +467,6 @@ export function EditPost() {
                         />
                         <span>
                           <strong>Draft</strong>
-                          <small>Keep hidden for now</small>
                         </span>
                       </label>
                     </div>
@@ -453,6 +475,20 @@ export function EditPost() {
                         {errors.status}
                       </p>
                     ) : null}
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label className="post-form-field-label">Featured</label>
+                    <label className="post-form-status-option" title="Show in featured content sections">
+                      <input
+                        checked={Boolean(values.featured)}
+                        name="featured"
+                        onChange={(event) => setFieldValue("featured", event.target.checked)}
+                        type="checkbox"
+                      />
+                      <span>
+                        <strong>Feature this {labels.singular.toLowerCase()}</strong>
+                      </span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -530,7 +566,7 @@ export function EditPost() {
                 <div className="post-form-section-heading">
                   <div>
                     <span>Editor</span>
-                    <h2>Post content</h2>
+                    <h2>{labels.singular} content</h2>
                   </div>
                 </div>
 
@@ -613,10 +649,10 @@ export function EditPost() {
 
             <div className="post-form-sticky-actions">
               <div>
-                <strong>Edit Post</strong>
-                <span>Update this post in your blog library.</span>
+                <strong>Edit {labels.singular}</strong>
+                <span>Update this item in your {labels.library}.</span>
               </div>
-              <SubmitButton loading={loading} text="Update Post" />
+              <SubmitButton loading={loading} text={`Update ${labels.singular}`} />
             </div>
           </main>
 
@@ -631,8 +667,8 @@ export function EditPost() {
                     <i className="fa fa-image"></i>
                   )}
                 </div>
-                <h2>{values.title || "Post title"}</h2>
-                <p>{values.excerpt || "Post excerpt preview will appear here."}</p>
+                <h2>{values.title || `${labels.singular} title`}</h2>
+                <p>{values.excerpt || `${labels.singular} excerpt preview will appear here.`}</p>
                 <div className="post-form-preview-meta">
                   <span>{values.category?.label || "Category"}</span>
                   <strong>{values.status == "true" ? "Published" : "Draft"}</strong>

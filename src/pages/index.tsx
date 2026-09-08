@@ -40,6 +40,7 @@ export * from "./categoryShowcase/EditCategoryShowcase";
 
 // Homepage
 export * from "./homepage/HomepageContent";
+export * from "./headerManagement/HeaderManagementContent";
 export * from "./contactPage/ContactPageContent";
 export * from "./sustainabilityPage/SustainabilityPageContent";
 export * from "./aboutoage/AboutPageContent";
@@ -50,6 +51,11 @@ export * from "./industryDetailsPage/IndustryDetailsPageContent";
 export * from "./govtPolicyPages/GovtPolicyPageContent";
 export * from "./reportPage/ReportPageContent";
 export * from "./memberListPage/MemberListPageContent";
+export * from "./membershipPages/MembershipPageContent";
+export * from "./pastEventsPage/PastEventsPageContent";
+export * from "./pressReleasesPage/PressReleasesPageContent";
+export * from "./mediaImagesPage/MediaImagesPageContent";
+export * from "./videosPage/VideosPageContent";
 export * from "./contactInquiries/ContactInquiryList";
 export * from "./contactInquiries/ContactInquiryDetails";
 export * from "./contactInquiries/EditContactInquiry";
