@@ -303,12 +303,13 @@ export function Sidebar() {
             "galleryCategories",
             "galleryImages",
             "/certificatepage",
-            "sustainabilityPage",
+            "/sustainabilityPage",
             "resourcePage",
             "faqsCategory",
             "faqs",
             "/privacypolicy",
             "/termandconditions",
+            "/bis-bee-page",
           ])}`}
         >
           <a
@@ -339,6 +340,15 @@ export function Sidebar() {
                   to="/aboutpage"
                 >
                   About Page
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${handleActiveLink("/bis-bee-page")}`}
+                  to="/bis-bee-page"
+                >
+                  BIS &amp; BEE Page
                 </Link>
               </li>
 
@@ -448,7 +458,7 @@ export function Sidebar() {
                 </Link>
               </li>
 
-              <li className="nav-item d-none">
+              <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink(
                     "/galleryCategories",
@@ -483,7 +493,7 @@ export function Sidebar() {
                   Certificate Page
                 </Link>
               </li>
-              <li className="nav-item d-none">
+              <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink(
                     "/sustainabilityPage",

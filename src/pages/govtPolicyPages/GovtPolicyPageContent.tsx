@@ -12,6 +12,9 @@ import {
   createGovtPolicyPageInitialValues,
   govtPolicyPageSchema,
   govtPolicyPages,
+  BisBeeContent,
+  BisBeeSection,
+  BisBeeTable,
 } from "../../validationSchemas/govtPolicyPageSchema";
 
 type ApiBody = Partial<GovtPolicyPageValues> & {
@@ -69,9 +72,56 @@ function normalizeValues(values: GovtPolicyPageValues): GovtPolicyPageValues {
     metaDescription: "",
     keywords: [],
   };
+  const sections = (values.sections || []).map((section) => {
+    const normalizedSection = { ...section };
+    if (section.id === "gst" && !section.pillarsHeading && section.description.includes("IFMA's request rests on 5 key pillars:")) {
+      const [description, pillarsHeading] = section.description.split("\n\nIFMA's request rests on 5 key pillars:");
+      normalizedSection.description = description.trim();
+      normalizedSection.pillarsHeading = "IFMA's request rests on 5 key pillars:";
+    }
+    if (section.id === "imports") {
+      const callout = section.highlightedCallout?.trim() || "Any barriers to trade or restriction on any category for imports by the way of a ban or imposition of prohibitory tariffs/duties may be detrimental to both demand and supply.";
+      let paragraphs = (section.paragraphs || [])
+        .map((paragraph) => ({
+          text: (paragraph.text || "").trim(),
+          style: paragraph.style === "highlighted" ? "highlighted" as const : "normal" as const,
+        }))
+        .filter((paragraph) => paragraph.text);
+
+      if (!paragraphs.length) {
+        paragraphs = (section.description || "")
+          .split(/\n\s*\n/)
+          .map((text) => ({ text: text.trim(), style: "normal" as const }))
+          .filter((paragraph) => paragraph.text);
+        const calloutIndex = paragraphs.findIndex((paragraph) => paragraph.text === callout);
+        if (calloutIndex >= 0) {
+          paragraphs[calloutIndex] = { text: callout, style: "highlighted" };
+        } else if (callout) {
+          paragraphs.splice(Math.min(2, paragraphs.length), 0, { text: callout, style: "highlighted" });
+        }
+      }
+
+      normalizedSection.paragraphs = paragraphs;
+      normalizedSection.description = paragraphs
+        .filter((paragraph) => paragraph.style === "normal")
+        .map((paragraph) => paragraph.text)
+        .join("\n\n");
+      normalizedSection.highlightedCallout = paragraphs.find((paragraph) => paragraph.style === "highlighted")?.text || "";
+    }
+
+    return {
+      ...normalizedSection,
+      buttons: (section.buttons || []).map((button) => {
+        if (button.note || !button.title.includes("(Page 5,")) return button;
+        const [title, note] = button.title.split(" (Page 5,");
+        return { ...button, title: title.trim(), note: `(Page 5,${note}`.trim() };
+      }),
+    };
+  });
 
   return {
     ...values,
+    sections,
     detailsSection: {
       heading: ds.heading || "",
       paragraphs: (ds.paragraphs || []).map((item) => (item || "").trim()).filter(Boolean),
@@ -103,9 +153,90 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
   );
 }
 
+function BisBeeTableEditor({ table, onChange, onRemove }: { table: BisBeeTable; onChange: (table: BisBeeTable) => void; onRemove: () => void }) {
+  const addColumn = () => onChange({ ...table, headers: [...table.headers, ""], rows: table.rows.map((row) => [...row, ""]) });
+  const removeColumn = (columnIndex: number) => onChange({ ...table, headers: table.headers.filter((_, index) => index !== columnIndex), rows: table.rows.map((row) => row.filter((_, index) => index !== columnIndex)) });
+  const addRow = () => onChange({ ...table, rows: [...table.rows, new Array(table.headers.length || 1).fill("")] });
+  const removeRow = (rowIndex: number) => onChange({ ...table, rows: table.rows.filter((_, index) => index !== rowIndex) });
+
+  return (
+    <div className="border rounded p-3 mb-3">
+      <div className="row g-2 mb-3">
+        <div className="col-md-3"><label className="form-label">Type</label><select className="form-select" value={table.type} onChange={(event) => onChange({ ...table, type: event.target.value })}><option value="specification">Specification</option><option value="rating">Rating</option><option value="performance">Performance</option></select></div>
+        <div className="col-md-5"><label className="form-label">Table Title</label><input className="form-control" value={table.title} onChange={(event) => onChange({ ...table, title: event.target.value })} /></div>
+        <div className="col-md-4"><label className="form-label">Subtitle / validity</label><input className="form-control" value={table.subtitle || ""} onChange={(event) => onChange({ ...table, subtitle: event.target.value })} placeholder="Valid from..." /></div>
+        <div className="col-md-12"><label className="form-label">Footer / table references</label><input className="form-control" value={table.footerText || ""} onChange={(event) => onChange({ ...table, footerText: event.target.value })} placeholder="(Table 3.1) (Table 3.2)" /></div>
+      </div>
+      <div className="d-flex justify-content-between align-items-center mb-2"><strong>Table Columns</strong><div className="d-flex gap-2"><button className="btn btn-sm btn-outline-primary" onClick={addColumn} type="button">+ Add Column</button><button className="btn btn-sm btn-outline-success" onClick={addRow} type="button">+ Add Row</button></div></div>
+      <div className="table-responsive">
+        <table className="table table-bordered align-middle mb-2"><thead><tr>{table.headers.map((header, columnIndex) => <th key={columnIndex} style={{ minWidth: 180 }}><div className="d-flex gap-1"><input className="form-control form-control-sm" placeholder={`Header ${columnIndex + 1}`} value={header} onChange={(event) => { const headers = [...table.headers]; headers[columnIndex] = event.target.value; onChange({ ...table, headers }); }} />{table.headers.length > 1 ? <button className="btn btn-sm btn-outline-danger" onClick={() => removeColumn(columnIndex)} type="button">x</button> : null}</div></th>)}{table.headers.length === 0 ? <th>No columns yet. Add a column to start.</th> : null}</tr></thead><tbody>{table.rows.map((row, rowIndex) => <tr key={rowIndex}>{table.headers.map((_, columnIndex) => <td key={columnIndex}><input className="form-control form-control-sm" placeholder={`Row ${rowIndex + 1}, cell ${columnIndex + 1}`} value={row[columnIndex] || ""} onChange={(event) => { const rows = table.rows.map((currentRow, index) => index === rowIndex ? [...currentRow] : currentRow); rows[rowIndex][columnIndex] = event.target.value; onChange({ ...table, rows }); }} /></td>)}<td style={{ width: 70 }}><button className="btn btn-sm btn-outline-danger" onClick={() => removeRow(rowIndex)} type="button">x</button></td></tr>)}{table.rows.length === 0 ? <tr><td className="text-muted" colSpan={Math.max(table.headers.length + 1, 2)}>No rows yet. Add a row to start.</td></tr> : null}</tbody></table>
+      </div>
+      <button className="btn btn-link text-danger px-0" onClick={onRemove} type="button">Remove Table</button>
+    </div>
+  );
+}
+
+function BisBeeEditor({ values, setFieldValue }: { values: GovtPolicyPageValues; setFieldValue: (field: string, value: unknown) => void }) {
+  const content: BisBeeContent = values.bisBeeContent || { introHeadingPrimary: "", introHeadingHighlight: "", introParagraphs: [], sections: [] };
+  const update = (field: string, value: unknown) => setFieldValue(`bisBeeContent.${field}`, value);
+
+  const updateSection = (index: number, section: BisBeeSection) => update(`sections.${index}`, section);
+  const updateTable = (sectionIndex: number, tableIndex: number, table: BisBeeTable) => update(`sections.${sectionIndex}.tables.${tableIndex}`, table);
+
+  return (
+    <>
+      <section className="card about-page-card">
+        <div className="card-body">
+          <SectionHeading eyebrow="Pages" title="BIS & BEE Introduction" />
+          <div className="row g-3 mb-3">
+            <div className="col-md-6"><label className="form-label">Primary title (navy)</label><input className="form-control" value={content.introHeadingPrimary} onChange={(event) => update("introHeadingPrimary", event.target.value)} placeholder="BIS STANDARDS AND" /></div>
+            <div className="col-md-6"><label className="form-label">Highlighted title (gold)</label><input className="form-control" value={content.introHeadingHighlight} onChange={(event) => update("introHeadingHighlight", event.target.value)} placeholder="BEE STAR LABELLING" /></div>
+          </div>
+          <div className="industry-editor-list">
+            <div className="industry-editor-list__head"><strong>Introduction Paragraphs</strong><button onClick={() => update("introParagraphs", [...content.introParagraphs, ""])} type="button">+ Add Paragraph</button></div>
+            {content.introParagraphs.map((paragraph, index) => (
+              <div className="industry-editor-row" key={index}>
+                <textarea className="form-control" value={paragraph} onChange={(event) => update(`introParagraphs.${index}`, event.target.value)} placeholder="Introduction paragraph" />
+                <button onClick={() => update("introParagraphs", content.introParagraphs.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {content.sections.map((section, sectionIndex) => (
+        <section className="card about-page-card" key={`${section.id}-${sectionIndex}`}>
+          <div className="card-body">
+            <div className="about-page-admin__header-actions"><SectionHeading eyebrow={`Section ${sectionIndex + 1}`} title={section.title || "Untitled section"} /><button className="btn btn-outline-danger btn-sm ms-auto" onClick={() => update("sections", content.sections.filter((_, index) => index !== sectionIndex))} type="button">Remove Section</button></div>
+            <div className="row g-3 mb-4">
+              <div className="col-md-4"><label className="form-label">Section ID</label><input className="form-control" value={section.id} onChange={(event) => updateSection(sectionIndex, { ...section, id: event.target.value })} /></div>
+              <div className="col-md-8"><label className="form-label">Section Title</label><input className="form-control" value={section.title} onChange={(event) => updateSection(sectionIndex, { ...section, title: event.target.value })} /></div>
+              <div className="col-12"><label className="form-label">Description</label><textarea className="form-control" rows={3} value={section.description} onChange={(event) => updateSection(sectionIndex, { ...section, description: event.target.value })} /></div>
+              <div className="col-md-6"><label className="form-label">Optional markings heading</label><input className="form-control" value={section.markingsHeading || ""} onChange={(event) => updateSection(sectionIndex, { ...section, markingsHeading: event.target.value })} placeholder="BEE Star Label" /></div>
+              <div className="col-md-6"><label className="form-label">Optional markings footer note</label><input className="form-control" value={section.footerNote || ""} onChange={(event) => updateSection(sectionIndex, { ...section, footerNote: event.target.value })} placeholder="BIS Name Plate - ..." /></div>
+            </div>
+
+            <div className="industry-editor-list mb-4">
+              <div className="industry-editor-list__head"><strong>Tables</strong><button onClick={() => update(`sections.${sectionIndex}.tables`, [...(section.tables || []), { type: "specification", title: "", subtitle: "", footerText: "", headers: [], rows: [] }])} type="button">+ Add Table</button></div>
+              {(section.tables || []).map((table, tableIndex) => (
+                <BisBeeTableEditor key={tableIndex} table={table} onChange={(nextTable) => updateTable(sectionIndex, tableIndex, nextTable)} onRemove={() => update(`sections.${sectionIndex}.tables`, section.tables.filter((_, index) => index !== tableIndex))} />
+              ))}
+            </div>
+
+            <div className="industry-editor-list mb-4"><div className="industry-editor-list__head"><strong>Markings</strong><button onClick={() => update(`sections.${sectionIndex}.markings`, [...(section.markings || []), { label: "", image: "", caption: "" }])} type="button">+ Add Marking</button></div>{(section.markings || []).map((marking, index) => <div className="industry-editor-row" key={index}><div className="row g-2 w-100"><div className="col-md-4"><input className="form-control" placeholder="Label" value={marking.label} onChange={(event) => update(`sections.${sectionIndex}.markings.${index}.label`, event.target.value)} /></div><div className="col-md-4"><input className="form-control" placeholder="Media filename / URL" value={marking.image} onChange={(event) => update(`sections.${sectionIndex}.markings.${index}.image`, event.target.value)} /></div><div className="col-md-4"><input className="form-control" placeholder="Caption" value={marking.caption} onChange={(event) => update(`sections.${sectionIndex}.markings.${index}.caption`, event.target.value)} /></div></div><button onClick={() => update(`sections.${sectionIndex}.markings`, section.markings.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button></div>)}</div>
+
+            <div className="industry-editor-list"><div className="industry-editor-list__head"><strong>Links &amp; Documents</strong><button onClick={() => update(`sections.${sectionIndex}.links`, [...(section.links || []), { title: "", url: "" }])} type="button">+ Add Link</button></div>{(section.links || []).map((link, index) => <div className="industry-editor-row" key={index}><div className="row g-2 w-100"><div className="col-md-6"><input className="form-control" placeholder="Document title" value={link.title} onChange={(event) => update(`sections.${sectionIndex}.links.${index}.title`, event.target.value)} /></div><div className="col-md-6"><input className="form-control" placeholder="Document URL" value={link.url} onChange={(event) => update(`sections.${sectionIndex}.links.${index}.url`, event.target.value)} /></div></div><button onClick={() => update(`sections.${sectionIndex}.links`, section.links.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button></div>)}</div>
+          </div>
+        </section>
+      ))}
+      <button className="btn btn-outline-primary mb-4" onClick={() => update("sections", [...content.sections, { id: `section-${content.sections.length + 1}`, title: "", description: "", markingsHeading: "", footerNote: "", tables: [], markings: [], links: [] }])} type="button">+ Add Category Section</button>
+    </>
+  );
+}
+
 export function GovtPolicyPageContent() {
   const params = useParams();
-  const slug = params.slug || "bis-specifications";
+  const slug = params.slug || "bis-bee";
   const pageConfig = govtPolicyPages.find((page) => page.slug === slug) || govtPolicyPages[0];
   const emptyValues = useMemo(() => createGovtPolicyPageInitialValues(pageConfig.label, pageConfig.slug), [pageConfig.label, pageConfig.slug]);
   const [loading, setLoading] = useState(true);
@@ -153,9 +284,27 @@ export function GovtPolicyPageContent() {
   }
 
   function syncSavedValues(body?: ApiBody, fallback?: GovtPolicyPageValues) {
-    const nextValues = normalizeValues(migrateLegacyParagraphs(mergeValues(emptyValues, body ? stripApiFields(body) : fallback)));
+    const nextValues = normalizeValues(migrateLegacyEngagementContent(migrateLegacyParagraphs(mergeValues(emptyValues, body ? stripApiFields(body) : fallback))));
     setValues(nextValues);
-    setHasExistingData(Boolean(body) || hasExistingData);
+    setHasExistingData(Boolean(body?._id) || hasExistingData);
+  }
+
+  function migrateLegacyEngagementContent(valuesToMigrate: GovtPolicyPageValues): GovtPolicyPageValues {
+    if (slug !== "govt-engagements" || !valuesToMigrate.sections?.length) return valuesToMigrate;
+    const hasLegacyProposalData = valuesToMigrate.sections.some((section) =>
+      section.id === "inclusion-proposals" || section.buttons?.some((button) => button.title.toLowerCase().includes("consideration of")),
+    );
+    if (!hasLegacyProposalData) return valuesToMigrate;
+
+    const referenceValues = createGovtPolicyPageInitialValues("Government Engagements", "govt-engagements");
+    return {
+      ...valuesToMigrate,
+      hero: referenceValues.hero,
+      introduction: referenceValues.introduction,
+      issues: referenceValues.issues,
+      sections: referenceValues.sections,
+      seo: referenceValues.seo,
+    };
   }
 
   function migrateLegacyParagraphs(valuesToMigrate: GovtPolicyPageValues): GovtPolicyPageValues {
@@ -176,9 +325,9 @@ export function GovtPolicyPageContent() {
       const apiResponse = await get(`/govtPolicyPages/${slug}`, true);
       if (apiResponse?.status === 200 && apiResponse.body) {
         const body = apiResponse.body as ApiBody;
-        const nextValues = normalizeValues(migrateLegacyParagraphs(mergeValues(emptyValues, stripApiFields(body))));
+        const nextValues = normalizeValues(migrateLegacyEngagementContent(migrateLegacyParagraphs(mergeValues(emptyValues, stripApiFields(body)))));
         setValues(nextValues);
-        setHasExistingData(true);
+        setHasExistingData(Boolean(body._id));
       } else {
         setValues(emptyValues);
         setHasExistingData(false);
@@ -239,17 +388,18 @@ export function GovtPolicyPageContent() {
         <div>
           <div className="about-page-admin__header-actions">
             <GoBackButton />
-            <span className="about-page-admin__eyebrow">Govt Policies</span>
+            <span className="about-page-admin__eyebrow">{slug === "bis-bee" ? "Pages" : "Govt Policies"}</span>
           </div>
           <h1>{pageConfig.label}</h1>
-          <p>Manage banner image, page text, CTA button, and SEO. Header and footer stay separate.</p>
+          <p>{slug === "bis-bee" ? "Manage introduction, category sections, specifications, ratings, markings, documents, and SEO." : "Manage banner image, page text, CTA button, and SEO. Header and footer stay separate."}</p>
         </div>
       </div>
       {loading ? <OverlayLoading /> : null}
       <form className="forms-sample" onSubmit={handleSubmit}>
         <div className="about-page-admin__layout">
           <main className="about-page-admin__main">
-            {slug === "govt-engagements" ? (
+            {slug === "bis-bee" ? <BisBeeEditor values={values} setFieldValue={setFieldValue} /> : null}
+            {slug !== "bis-bee" ? (slug === "govt-engagements" ? (
               <>
                 {/* Hero Section */}
                 <section className="card about-page-card">
@@ -278,6 +428,10 @@ export function GovtPolicyPageContent() {
                           </button>
                         </div>
                       </div>
+                      <div className="col-md-12">
+                        <label className="form-label">Banner Image Alt Text</label>
+                        <input className="form-control" name="hero.bannerImage.alt" onBlur={handleBlur} onChange={handleChange} placeholder="Government Engagements banner" value={values.hero?.bannerImage?.alt || ""} />
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -285,50 +439,27 @@ export function GovtPolicyPageContent() {
                 {/* Introduction Section */}
                 <section className="card about-page-card">
                   <div className="card-body">
-                    <SectionHeading eyebrow="Top Cards" title="Introduction Section" />
-                    <div className="row g-4">
-                      {/* Left Card */}
-                      <div className="col-md-6">
-                        <div className="p-3 border rounded">
-                          <h5 className="mb-3 font-weight-bold">Left Card (Standard Revision)</h5>
-                          <div className="form-group">
-                            <label>Title</label>
-                            <input className="form-control" name="introduction.leftCard.title" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.leftCard?.title || ""} />
-                          </div>
-                          <div className="form-group">
-                            <label>Description</label>
-                            <textarea className="form-control" rows={3} name="introduction.leftCard.description" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.leftCard?.description || ""} />
-                          </div>
-                          <div className="form-group">
-                            <label>Link Text</label>
-                            <input className="form-control" name="introduction.leftCard.linkText" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.leftCard?.linkText || ""} />
-                          </div>
-                          <div className="form-group mb-0">
-                            <label>Link URL</label>
-                            <input className="form-control" name="introduction.leftCard.linkUrl" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.leftCard?.linkUrl || ""} />
-                          </div>
-                        </div>
+                    <SectionHeading eyebrow="Lead Section" title="Policy Advocacy Introduction" />
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-4">
+                        <label className="form-label">Eyebrow</label>
+                        <input className="form-control" name="introduction.eyebrow" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.eyebrow || ""} placeholder="POLICY ADVOCACY" />
                       </div>
-                      {/* Right Card */}
-                      <div className="col-md-6">
-                        <div className="p-3 border rounded">
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5 className="mb-0 font-weight-bold">Right Card (Enforcement Requirements)</h5>
-                            <button className="btn btn-sm btn-outline-primary" onClick={() => setFieldValue("introduction.rightCard.points", [...(values.introduction?.rightCard?.points || []), { text: "" }])} type="button">+ Add Point</button>
-                          </div>
-                          <div className="form-group">
-                            <label>Title</label>
-                            <input className="form-control" name="introduction.rightCard.title" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.rightCard?.title || ""} />
-                          </div>
-                          <div className="industry-editor-list">
-                            {(values.introduction?.rightCard?.points || []).map((point, pIndex) => (
-                              <div className="industry-editor-row" key={pIndex}>
-                                <input className="form-control" name={`introduction.rightCard.points.${pIndex}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Requirement text" value={point.text} />
-                                <button onClick={() => setFieldValue("introduction.rightCard.points", (values.introduction?.rightCard?.points || []).filter((_, idx) => idx !== pIndex))} type="button"><i className="fa fa-times"></i></button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Main Heading</label>
+                        <input className="form-control" name="introduction.title" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.title || ""} placeholder="Representing the industry" />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Highlighted Heading</label>
+                        <input className="form-control" name="introduction.highlightedTitle" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.highlightedTitle || ""} placeholder="before government" />
+                      </div>
+                      <div className="col-md-8">
+                        <label className="form-label">Lead Paragraph</label>
+                        <textarea className="form-control" rows={4} name="introduction.body" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.body || ""} placeholder="Lead paragraph" />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Concerns Heading</label>
+                        <textarea className="form-control" rows={4} name="introduction.concernsHeading" onBlur={handleBlur} onChange={handleChange} value={values.introduction?.concernsHeading || ""} placeholder="IFMA's concerns raised before BEE included:" />
                       </div>
                     </div>
                   </div>
@@ -338,6 +469,24 @@ export function GovtPolicyPageContent() {
                 <section className="card about-page-card">
                   <div className="card-body">
                     <SectionHeading eyebrow="Issues & Risks" title="Supply Side vs Demand Risk Issues" />
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-4">
+                        <label className="form-label">Engagement Eyebrow</label>
+                        <input className="form-control" name="issues.eyebrow" onBlur={handleBlur} onChange={handleChange} value={values.issues?.eyebrow || ""} placeholder="Engagement 01 - BEE" />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Main Heading</label>
+                        <input className="form-control" name="issues.title" onBlur={handleBlur} onChange={handleChange} value={values.issues?.title || ""} placeholder="Deferment of star" />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Highlighted Heading</label>
+                        <input className="form-control" name="issues.highlightedTitle" onBlur={handleBlur} onChange={handleChange} value={values.issues?.highlightedTitle || ""} placeholder="labelling requirements" />
+                      </div>
+                      <div className="col-md-8">
+                        <label className="form-label">Engagement Introduction</label>
+                        <textarea className="form-control" rows={2} name="issues.description" onBlur={handleBlur} onChange={handleChange} value={values.issues?.description || ""} />
+                      </div>
+                    </div>
                     <div className="row g-4">
                       {/* Supply Side */}
                       <div className="col-md-6">
@@ -353,7 +502,10 @@ export function GovtPolicyPageContent() {
                           <div className="industry-editor-list">
                             {(values.issues?.supplySide?.points || []).map((point, pIndex) => (
                               <div className="industry-editor-row" key={pIndex}>
-                                <input className="form-control" name={`issues.supplySide.points.${pIndex}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Supply issue text" value={point.text} />
+                                <div className="row g-2 w-100">
+                                  <div className="col-md-5"><input className="form-control" name={`issues.supplySide.points.${pIndex}.label`} onBlur={handleBlur} onChange={handleChange} placeholder="Bold label" value={point.label || ""} /></div>
+                                  <div className="col-md-7"><input className="form-control" name={`issues.supplySide.points.${pIndex}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Description" value={point.text} /></div>
+                                </div>
                                 <button onClick={() => setFieldValue("issues.supplySide.points", (values.issues?.supplySide?.points || []).filter((_, idx) => idx !== pIndex))} type="button"><i className="fa fa-times"></i></button>
                               </div>
                             ))}
@@ -364,7 +516,7 @@ export function GovtPolicyPageContent() {
                       <div className="col-md-6">
                         <div className="p-3 border rounded">
                           <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5 className="mb-0 font-weight-bold">Demand Risk Issues</h5>
+                            <h5 className="mb-0 font-weight-bold">Demand Side Issues</h5>
                             <button className="btn btn-sm btn-outline-primary" onClick={() => setFieldValue("issues.demandSide.points", [...(values.issues?.demandSide?.points || []), { text: "" }])} type="button">+ Add Issue</button>
                           </div>
                           <div className="form-group">
@@ -374,7 +526,10 @@ export function GovtPolicyPageContent() {
                           <div className="industry-editor-list">
                             {(values.issues?.demandSide?.points || []).map((point, pIndex) => (
                               <div className="industry-editor-row" key={pIndex}>
-                                <input className="form-control" name={`issues.demandSide.points.${pIndex}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Demand risk text" value={point.text} />
+                                <div className="row g-2 w-100">
+                                  <div className="col-md-5"><input className="form-control" name={`issues.demandSide.points.${pIndex}.label`} onBlur={handleBlur} onChange={handleChange} placeholder="Bold label" value={point.label || ""} /></div>
+                                  <div className="col-md-7"><input className="form-control" name={`issues.demandSide.points.${pIndex}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Description" value={point.text} /></div>
+                                </div>
                                 <button onClick={() => setFieldValue("issues.demandSide.points", (values.issues?.demandSide?.points || []).filter((_, idx) => idx !== pIndex))} type="button"><i className="fa fa-times"></i></button>
                               </div>
                             ))}
@@ -399,26 +554,84 @@ export function GovtPolicyPageContent() {
                           <button className="btn btn-sm btn-danger" onClick={() => setFieldValue("sections", (values.sections || []).filter((_, idx) => idx !== sIndex))} type="button"><i className="fa fa-trash"></i> Remove Section</button>
                         </div>
                         <div className="form-group">
-                          <label>Section Title</label>
-                          <input className="form-control" name={`sections.${sIndex}.title`} onBlur={handleBlur} onChange={handleChange} placeholder="Section title" value={section.title} />
+                          <label>Section ID / Anchor</label>
+                          <input className="form-control" name={`sections.${sIndex}.id`} onBlur={handleBlur} onChange={handleChange} placeholder="e.g. gst-relaxation" value={section.id} />
                         </div>
-                        <div className="form-group">
-                          <label>Section Description / Paragraphs</label>
-                          <textarea className="form-control" rows={4} name={`sections.${sIndex}.description`} onBlur={handleBlur} onChange={handleChange} placeholder="Detailed text content..." value={section.description} />
+                        <div className="row g-3">
+                          <div className="col-md-4">
+                            <label>Section Eyebrow</label>
+                            <input className="form-control" name={`sections.${sIndex}.eyebrow`} onBlur={handleBlur} onChange={handleChange} placeholder="Engagement 02 - BEE" value={section.eyebrow || ""} />
+                          </div>
+                          <div className="col-md-4">
+                            <label>Main Heading</label>
+                            <input className="form-control" name={`sections.${sIndex}.title`} onBlur={handleBlur} onChange={handleChange} placeholder="Inclusion of" value={section.title} />
+                          </div>
+                          <div className="col-md-4">
+                            <label>Highlighted Heading</label>
+                            <input className="form-control" name={`sections.${sIndex}.highlightedTitle`} onBlur={handleBlur} onChange={handleChange} placeholder="all sweeps for ceiling fans" value={section.highlightedTitle || ""} />
+                          </div>
                         </div>
+                        {section.id !== "imports" ? (
+                          <div className="form-group">
+                            <label>Section Description / Paragraphs</label>
+                            <textarea className="form-control" rows={4} name={`sections.${sIndex}.description`} onBlur={handleBlur} onChange={handleChange} placeholder="Detailed text content..." value={section.description} />
+                          </div>
+                        ) : null}
+                        {section.id === "gst" ? (
+                          <div className="form-group">
+                            <label>Pillars Heading</label>
+                            <input className="form-control" name={`sections.${sIndex}.pillarsHeading`} onBlur={handleBlur} onChange={handleChange} placeholder="IFMA's request rests on 5 key pillars:" value={section.pillarsHeading || ""} />
+                          </div>
+                        ) : null}
+                        {section.id === "imports" ? (
+                          <div className="mt-4 mb-3 border p-2 bg-white rounded">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <strong>Section Paragraphs</strong>
+                              <button
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={() => setFieldValue(`sections.${sIndex}.paragraphs`, [...(section.paragraphs || []), { text: "", style: "normal" }])}
+                                type="button"
+                              >
+                                + Add Paragraph
+                              </button>
+                            </div>
+                            {(section.paragraphs || []).map((paragraph, pIndex) => (
+                              <div className="row g-2 mb-2 align-items-start" key={pIndex}>
+                                <div className="col-md-3">
+                                  <label className="form-label small mb-1">Display Style</label>
+                                  <select className="form-select form-select-sm" name={`sections.${sIndex}.paragraphs.${pIndex}.style`} onChange={handleChange} value={paragraph.style}>
+                                    <option value="normal">Normal</option>
+                                    <option value="highlighted">Highlighted</option>
+                                  </select>
+                                </div>
+                                <div className="col-md-8">
+                                  <label className="form-label small mb-1">Paragraph Text</label>
+                                  <textarea className="form-control form-control-sm" rows={3} name={`sections.${sIndex}.paragraphs.${pIndex}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Paragraph text" value={paragraph.text} />
+                                </div>
+                                <div className="col-md-1 pt-4">
+                                  <button className="btn btn-sm btn-outline-danger w-100" onClick={() => setFieldValue(`sections.${sIndex}.paragraphs`, (section.paragraphs || []).filter((_, idx) => idx !== pIndex))} type="button" aria-label="Remove paragraph"><i className="fa fa-times"></i></button>
+                                </div>
+                              </div>
+                            ))}
+                            {!(section.paragraphs || []).length ? <div className="text-muted small">Add normal or highlighted paragraphs for this section.</div> : null}
+                          </div>
+                        ) : null}
 
                         {/* Highlight Callout Buttons */}
                         <div className="mb-3 border p-2 bg-white rounded">
                           <div className="d-flex justify-content-between align-items-center mb-2">
                             <strong>Callout / Highlight Boxes</strong>
-                            <button className="btn btn-sm btn-outline-secondary" onClick={() => setFieldValue(`sections.${sIndex}.buttons`, [...(section.buttons || []), { title: "", subtitle: "", url: "" }])} type="button">+ Add Box</button>
+                            <button className="btn btn-sm btn-outline-secondary" onClick={() => setFieldValue(`sections.${sIndex}.buttons`, [...(section.buttons || []), { title: "", note: "", subtitle: "", url: "" }])} type="button">+ Add Box</button>
                           </div>
                           {(section.buttons || []).map((btn, bIndex) => (
-                            <div className="row g-2 mb-2 align-items-center" key={bIndex}>
-                              <div className="col-md-5">
-                                <input className="form-control form-control-sm" name={`sections.${sIndex}.buttons.${bIndex}.title`} onChange={handleChange} placeholder="Box title" value={btn.title} />
+                              <div className="row g-2 mb-2 align-items-center" key={bIndex}>
+                              <div className="col-md-4">
+                                <input className="form-control form-control-sm" style={{ fontSize: "1rem", fontWeight: 600 }} name={`sections.${sIndex}.buttons.${bIndex}.title`} onChange={handleChange} placeholder="Main title" value={btn.title} />
                               </div>
-                              <div className="col-md-6">
+                              <div className="col-md-3">
+                                <input className="form-control form-control-sm text-muted" style={{ fontSize: "0.82rem" }} name={`sections.${sIndex}.buttons.${bIndex}.note`} onChange={handleChange} placeholder="Small note" value={btn.note || ""} />
+                              </div>
+                              <div className="col-md-4">
                                 <input className="form-control form-control-sm" name={`sections.${sIndex}.buttons.${bIndex}.subtitle`} onChange={handleChange} placeholder="Box subtitle" value={btn.subtitle} />
                               </div>
                               <div className="col-md-1">
@@ -428,6 +641,7 @@ export function GovtPolicyPageContent() {
                           ))}
                         </div>
 
+                        {section.id !== "sweeps" && !(section.table?.headers?.length) ? <>
                         {/* Cards Grid */}
                         <div className="mb-3 border p-2 bg-white rounded">
                           <div className="d-flex justify-content-between align-items-center mb-2">
@@ -446,11 +660,25 @@ export function GovtPolicyPageContent() {
                               <div className="form-group mb-0">
                                 <input className="form-control form-control-sm" name={`sections.${sIndex}.cards.${cIndex}.description`} onChange={handleChange} placeholder="Card description" value={cardItem.description} />
                               </div>
+                              <div className="mt-2">
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                  <small className="text-muted">Card points</small>
+                                  <button className="btn btn-sm btn-outline-primary" onClick={() => setFieldValue(`sections.${sIndex}.cards.${cIndex}.points`, [...(cardItem.points || []), ""])} type="button">+ Add Point</button>
+                                </div>
+                                {(cardItem.points || []).map((point, pointIndex) => (
+                                  <div className="d-flex gap-2 mb-2" key={pointIndex}>
+                                    <input className="form-control form-control-sm" name={`sections.${sIndex}.cards.${cIndex}.points.${pointIndex}`} onChange={handleChange} placeholder="Point text" value={point} />
+                                    <button className="btn btn-sm btn-outline-danger" onClick={() => setFieldValue(`sections.${sIndex}.cards.${cIndex}.points`, (cardItem.points || []).filter((_, idx) => idx !== pointIndex))} type="button"><i className="fa fa-times"></i></button>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           ))}
                         </div>
+                        </> : null}
 
-                        {/* Data Table */}
+                        {section.id === "sweeps" || Boolean(section.table?.headers?.length) ? <>
+                        {/* Performance Table */}
                         <div className="border p-2 bg-white rounded">
                           <div className="d-flex justify-content-between align-items-center mb-2">
                             <strong>Data Table (e.g. Ceiling Fan Attributes / Pre-Budget Memo)</strong>
@@ -484,6 +712,7 @@ export function GovtPolicyPageContent() {
                             ))}
                           </div>
                         </div>
+                        </> : null}
                       </div>
                     ))}
                   </div>
@@ -589,7 +818,7 @@ export function GovtPolicyPageContent() {
                   </div>
                 </section>
               </>
-            )}
+            )) : null}
 
             <section className="card about-page-card">
               <div className="card-body">

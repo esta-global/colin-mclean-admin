@@ -1,6 +1,7 @@
 import * as Yup from 'yup';
 
 export interface GovtEngagementPoint {
+  label?: string;
   text: string;
 }
 
@@ -23,6 +24,7 @@ export interface GovtEngagementSideIssue {
 
 export interface GovtEngagementButton {
   title: string;
+  note?: string;
   subtitle: string;
   url: string;
 }
@@ -39,10 +41,58 @@ export interface GovtEngagementCard {
   points: string[];
 }
 
-export interface GovtEngagementSection {
+export interface GovtEngagementParagraph {
+  text: string;
+  style: "normal" | "highlighted";
+}
+
+export interface BisBeeTable {
+  type: string;
+  title: string;
+  subtitle: string;
+  footerText: string;
+  headers: string[];
+  rows: string[][];
+}
+
+export interface BisBeeMarking {
+  label: string;
+  image: string;
+  caption: string;
+}
+
+export interface BisBeeLink {
+  title: string;
+  url: string;
+}
+
+export interface BisBeeSection {
   id: string;
   title: string;
   description: string;
+  markingsHeading: string;
+  footerNote: string;
+  tables: BisBeeTable[];
+  markings: BisBeeMarking[];
+  links: BisBeeLink[];
+}
+
+export interface BisBeeContent {
+  introHeadingPrimary: string;
+  introHeadingHighlight: string;
+  introParagraphs: string[];
+  sections: BisBeeSection[];
+}
+
+export interface GovtEngagementSection {
+  id: string;
+  eyebrow?: string;
+  title: string;
+  highlightedTitle?: string;
+  description: string;
+  pillarsHeading?: string;
+  highlightedCallout?: string;
+  paragraphs?: GovtEngagementParagraph[];
   buttons: GovtEngagementButton[];
   cards: GovtEngagementCard[];
   table: GovtEngagementTable;
@@ -70,6 +120,7 @@ export interface GovtPolicyPageValues {
       url: string;
     };
   };
+  bisBeeContent?: BisBeeContent;
   hero?: {
     title: string;
     highlightedTitle: string;
@@ -79,10 +130,19 @@ export interface GovtPolicyPageValues {
     };
   };
   introduction?: {
-    leftCard: GovtEngagementLeftCard;
-    rightCard: GovtEngagementRightCard;
+    eyebrow: string;
+    title: string;
+    highlightedTitle: string;
+    body: string;
+    concernsHeading: string;
+    leftCard?: GovtEngagementLeftCard;
+    rightCard?: GovtEngagementRightCard;
   };
   issues?: {
+    eyebrow: string;
+    title: string;
+    highlightedTitle: string;
+    description: string;
     supplySide: GovtEngagementSideIssue;
     demandSide: GovtEngagementSideIssue;
   };
@@ -120,6 +180,53 @@ export const govtPolicyPageSchema = Yup.object({
       url: stringField(),
     }),
   }),
+  bisBeeContent: Yup.object({
+    introHeadingPrimary: stringField(),
+    introHeadingHighlight: stringField(),
+    introParagraphs: Yup.array().of(stringField()),
+    sections: Yup.array().of(
+      Yup.object({
+        id: stringField(),
+        eyebrow: stringField(),
+      title: stringField(),
+      highlightedTitle: stringField(),
+      description: stringField(),
+      pillarsHeading: stringField(),
+      highlightedCallout: stringField(),
+      paragraphs: Yup.array().of(
+        Yup.object({
+          text: stringField(),
+          style: Yup.mixed<"normal" | "highlighted">().oneOf(["normal", "highlighted"]),
+        }),
+      ),
+        markingsHeading: stringField(),
+        footerNote: stringField(),
+        tables: Yup.array().of(
+          Yup.object({
+            type: stringField(),
+            title: stringField(),
+            subtitle: stringField(),
+            footerText: stringField(),
+            headers: Yup.array().of(stringField()),
+            rows: Yup.array().of(Yup.array().of(stringField())),
+          }),
+        ),
+        markings: Yup.array().of(
+          Yup.object({
+            label: stringField(),
+            image: stringField(),
+            caption: stringField(),
+          }),
+        ),
+        links: Yup.array().of(
+          Yup.object({
+            title: stringField(),
+            url: stringField(),
+          }),
+        ),
+      }),
+    ),
+  }).optional(),
   hero: Yup.object({
     title: stringField(),
     highlightedTitle: stringField(),
@@ -129,6 +236,11 @@ export const govtPolicyPageSchema = Yup.object({
     }),
   }).optional(),
   introduction: Yup.object({
+    eyebrow: stringField(),
+    title: stringField(),
+    highlightedTitle: stringField(),
+    body: stringField(),
+    concernsHeading: stringField(),
     leftCard: Yup.object({
       title: stringField(),
       description: stringField(),
@@ -145,6 +257,10 @@ export const govtPolicyPageSchema = Yup.object({
     }),
   }).optional(),
   issues: Yup.object({
+    eyebrow: stringField(),
+    title: stringField(),
+    highlightedTitle: stringField(),
+    description: stringField(),
     supplySide: Yup.object({
       title: stringField(),
       points: Yup.array().of(Yup.object({ text: stringField() })),
@@ -162,6 +278,7 @@ export const govtPolicyPageSchema = Yup.object({
       buttons: Yup.array().of(
         Yup.object({
           title: stringField(),
+          note: stringField(),
           subtitle: stringField(),
           url: stringField(),
         }),
@@ -188,6 +305,7 @@ export const govtPolicyPageSchema = Yup.object({
 });
 
 export const govtPolicyPages = [
+  { slug: "bis-bee", label: "BIS & BEE" },
   { slug: "bis-specifications", label: "BIS Specifications" },
   { slug: "quality-control-order", label: "Quality Control Order" },
   { slug: "bee-star-rating", label: "BEE Star Rating" },
@@ -233,115 +351,134 @@ export const createGovtEngagementDefaultValues = (): Partial<GovtPolicyPageValue
     },
   },
   introduction: {
-    leftCard: {
-      title: "Standard Revision Alignment",
-      description: "Essential technical parameters in standard need to be revised considering energy performing ceiling fan standard. IFMA members are aligned to focus on the standard revise requirements.",
-      linkText: "Revised Indian standard IS 374: 2019",
-      linkUrl: "#",
-    },
-    rightCard: {
-      title: "Enforcement of Standardization Requirements",
-      points: [
-        { text: "Voluntary compliance by all manufacturer w.e.f Dec 2019" },
-        { text: "Mandatory compliance w.e.f 1st Jan 2020 by BIS" },
-        { text: "Extension granted 6 month" },
-        { text: "Implementation date: Oct 2020" },
-        { text: "Revised implementation date: 01.01.2021" },
-      ],
-    },
+    eyebrow: "Policy Advocacy",
+    title: "Representing the industry",
+    highlightedTitle: "before government",
+    body: "While IFMA members are committed towards preserving the environment and promoting energy efficiency and welcome the noble intent of BEE in mandating the star labelling requirements, however in the current COVID-19 situation, industry is reeling under tremendous economic pressure.",
+    concernsHeading: "IFMA's concerns raised before BEE included:",
   },
   issues: {
+    eyebrow: "Engagement 01 - BEE",
+    title: "Deferment of star",
+    highlightedTitle: "labelling requirements",
+    description: "The case placed before the Bureau of Energy Efficiency rested on the pressure being felt on both sides of the market.",
     supplySide: {
       title: "Supply Side Issues",
       points: [
-        { text: "Extension of timeline - 01.01.2021" },
-        { text: "Testing Essential for Product - Orders" },
-        { text: "Supply Chain Disruptions" },
-        { text: "Substandard imports / Counterfeit products" },
-        { text: "Effective implementation across retail touch points" },
-        { text: "Audit - Non standards sales and rogue sellers" },
+        { label: "Research & Development", text: "stalled" },
+        { label: "Testing & approval of new products", text: "stalled" },
+        { label: "Supply chain & productivity", text: "disruption and losses due to the Covid-19 pandemic" },
+        { label: "Workforce", text: "uncertainty caused due to the Covid-19 pandemic" },
+        { label: "Unsold inventory", text: "piled up stocks due to closure of shops in lockdown" },
+        { label: "Retail", text: "restricted due to closure of shops in lockdown" },
       ],
     },
     demandSide: {
-      title: "Demand Risk Issues",
+      title: "Demand Side Issues",
       points: [
-        { text: "Non availability of lab capacity" },
-        { text: "Interoperability requirements - Components" },
-        { text: "Current Standards vs Best Practices" },
-        { text: "Uniformity of implementation & enforcement" },
-        { text: "Risk assessment of System Level Standards & Cyber Security" },
+        { label: "Total consumer demand", text: "all time low" },
+        { label: "Implication for the common man", text: "cost burden" },
+        { label: "Economic slowdown", text: "slower recovery" },
+        { label: "Public health implication", text: "heat wave across India" },
+        { label: "Public awareness programme", text: "lack of acceptability by consumers" },
       ],
     },
   },
   sections: [
     {
-      id: "inclusion-proposals",
-      title: "Inclusion of all sweeps for ceiling fan, Air delivery and service value proposals",
-      description: "Due to high frequency application of induction motors and BLDC motors, IFMA members proposed essential performance attributes and timelines.",
+      id: "sweeps",
+      eyebrow: "Engagement 02 - BEE",
+      title: "Inclusion of",
+      highlightedTitle: "all sweeps for ceiling fans",
+      description: "IFMA's proposals on sweep sizes, air delivery and service value. Star Labelling Requirements which become mandatory from 1st January 2022 cover sweep sizes of fans as stated in Indian Standard (IS) 374:2019 - namely 900 mm, 1050 mm, 1200 mm, 1400 mm and 1500 mm. Since there are other sweep sizes prevalent in the market, IFMA has been engaging with BEE for the inclusion of these sweep sizes for effective compliance with the star labelling norms.",
       buttons: [
         {
-          title: "CONSIDERATION OF ALLOWING FOR THE EXISTING BATCHES",
-          subtitle: "The batch manufactured before 01.01.2021 should be allowed to be sold in market up to 30.06.2021.",
+          title: "Substitute the following for the existing entries",
+          subtitle: "The recommended standard sizes of ceiling fans shall be 600, 750, 900, 1050, 1200, 1300, 1400 and 1500 mm.",
           url: "",
         },
         {
-          title: "CONSIDERATION OF FOLLOWING ATTRIBUTE - FANS CLASSIFICATION (TABLE 1)",
-          subtitle: "Consideration of total airflow and noise parameters to be included in the revised standard.",
+          title: "Insertion at the end",
+          note: "(Page 5, clause 15.1, para 1)",
+          subtitle: "Before starting the tests, the fan and its attachment are adjusted in accordance with the manufacturer's instructions for normal operation. Any controls shall be set for maximum continuous air flow unless the manufacturer's instruction states otherwise. Any other functions such as luminaries and remote-control mechanism shall be turned off.",
+          url: "",
+        },
+        {
+          title: "Substitute the following for the existing entries",
+          subtitle: "Performance value of fans (clause 15.1 and 15.2)",
           url: "",
         },
       ],
       cards: [],
       table: {
-        title: "TABLE 1: REVISED ATTRIBUTES FOR CEILING FAN PERFORMANCE (PROPOSED BY IFMA)",
-        headers: ["S.No", "Fan Type/Size", "Air Delivery (m3/min)", "Performance"],
+        title: "Performance value of fans (clause 15.1 and 15.2)",
+        headers: ["Sl. No.", "Fan size (mm)", "Air delivery (m3/m/W)", "Service value"],
         rows: [
-          ["1", "600", "70", "3.2"],
-          ["2", "750", "110", "3.5"],
-          ["3", "900", "130", "3.8"],
-          ["4", "1050", "170", "4.0"],
-          ["5", "1200", "215", "4.0"],
-          ["6", "1400", "270", "4.1"],
-          ["7", "1500", "300", "4.1"],
+          ["1", "600", "100", "1.5"],
+          ["2", "750", "115", "2.1"],
+          ["3", "900", "130", "3.1"],
+          ["4", "1050", "150", "3.1"],
+          ["5", "1200", "210", "4.0"],
+          ["6", "1300", "215", "4.0"],
+          ["7", "1400", "245", "4.1"],
+          ["8", "1500", "270", "4.3"],
         ],
       },
     },
     {
-      id: "regulating-imports",
-      title: "Regulating imports from China, MSM scale / Fiscal attractions, WCO evaluation",
-      description: "IFMA has been engaging with Indian Government for Quality Control Order (QCO) for Fans to regulate the import of low quality & substandard fans into the country.\nPresently, IFMA is advocating with BIS to formulate Indian Standard for Fan Components (Motors, Blades, Downrods, Bearings etc) which will assist in restricting cheap quality sub-assemblies imports into India & boost domestic component manufacturing ecosystem.\nAdvocating for lower duties on imports of critical raw materials (e.g. electrical steel, rare earth magnets) used in BLDC motor technology to promote local manufacturing.\nIFMA has requested Ministry of Heavy Industries / DPIIT to include ceiling fans under PLI Scheme or state incentive scheme for component manufacturing to boost domestic manufacturing.",
+      id: "imports",
+      eyebrow: "Engagement 03 - DPIIT",
+      title: "Regulating imports, HSN codes and BCD reduction",
+      highlightedTitle: "",
+      description: "IFMA has been engaging with the Department for Promotion of Industry and Internal Trade on regulations on the import of goods from China and its effect on the fan industry.\n\nIFMA highlighted the hardships faced by the industry - research and development, raw material procurement and inventory management of existing products have already slowed down. As per industry estimates, there was a loss of capacity utilisation of 60-70% across all manufacturing facilities due to the above reasons, along with the loss of the peak season.\n\nAny barriers to trade or restriction on any category for imports by the way of a ban or imposition of prohibitory tariffs/duties may be detrimental to both demand and supply.\n\nIFMA and the fan industry support the government's push for 'Make in India' through boosting domestic manufacturing capabilities; imposing high tariffs in the form of BCD hikes to promote domestic capabilities may prove to be counterproductive for the entire existing value chain.\n\nSince Basic Customs Duty was increased in February 2020, which already led to an increase in consumer prices by ~15+%, it was requested to bring back the BCD to previous levels and give the industry time to scale up production.\n\nScaling up operations domestically is an industry-level intention; however, instantaneously curbing imports would lead to domestic demand not being fulfilled for this common man's product. To build the requisite capacity to meet the demand, the industry will require a time frame of at least ~2-3 years to scale up operations with the support of the government on developing a comprehensive ecosystem and the sophistication required for mass-scale, commercially viable production of fans.",
       buttons: [],
       cards: [],
       table: { title: "", headers: [], rows: [] },
     },
     {
-      id: "gst-relaxation",
-      title: "Relaxation of GST Rates for Electrical Fans for B2C – DPIIT, GST Council",
-      description: "IFMA representation to Ministry of Finance / GST Council regarding GST rationalization for ceiling fans.",
+      id: "gst",
+      eyebrow: "Engagement 04 - CBIC & GST Council",
+      title: "Relaxation of GST rates for electrical fans to 5%",
+      highlightedTitle: "",
+      description: "IFMA has been requesting the CBIC and the GST Council for the inclusion of a GST rate reduction on fans - a common-person product - from the current 18% to 5% as an agenda item for discussion in the said GST Council meeting.",
+      pillarsHeading: "IFMA's request rests on 5 key pillars:",
       buttons: [],
       cards: [
-        { title: "Fast Track Approvals", description: "Accelerated testing and certification for compliant manufacturers.", points: ["Quick turn-around time", "Priority processing"] },
-        { title: "Essential Declarations", description: "Clear guidelines on product ratings and energy efficiency declarations.", points: ["Standardized labels", "Consumer transparency"] },
-        { title: "Capacity Building", description: "Support for domestic testing laboratories and technical infrastructure.", points: ["Lab upgrades", "Skill development"] },
-        { title: "Market Surveillance & Enforcement", description: "Joint audit drives with authorities to curb non-compliant sales.", points: ["Random sampling", "Penalty enforcement"] },
-        { title: "Appeal and Grievance", description: "Institutional redressal mechanism for industry grievances.", points: ["Nodal office", "Fast resolution"] },
+        { title: "Public health standpoint", description: "", points: ["Fans act as an ancillary medical device, playing an important role in mitigating COVID-19 by improving ventilation.", "The Ministry of Health and Family Welfare recognises use of air supply fans to help improve thermal comfort and maintain good ventilation.", "As per the Centre for Disease Control, US, fans can decrease the risk of Covid-19 transmission indoors."] },
+        { title: "Demand side challenges", description: "", points: ["The fan industry, as per industry estimates, is facing a demand loss of 35% of annual sales.", "With income levels shrinking or reducing to nil in some cases, any support passed on in the form of a GST rate reduction will be a big relief to the consumer."] },
+        { title: "Supply side challenges", description: "", points: ["The adverse impact of a high GST rate of 18% is impacting the industry and the supply chain - vendors, distributors, channel partners and the end consumer.", "Input cost for production of fans has escalated by 15-20% given the impact of the second wave.", "A reduction in GST rate can provide a working capital cushion to invest in capacity expansion."] },
+        { title: "Energy efficiency standpoint", description: "", points: ["The fan industry is working towards effective implementation of BEE Star Labelling Requirements, mandatory from 1st January 2022.", "Compliance with energy efficiency norms has a cost implication of ~25-30% on the price of a fan.", "A GST reduction provides working capital to invest in capacity expansion and energy-efficient technology.", "It can add to government revenue while reducing the overall carbon footprint, as per the Paris Agreement 2015."] },
+        { title: "Atmanirbhar Bharat", description: "", points: ["The fan industry is one of the most highly indigenised industries, with close to ~80% market penetration, touching the lives of 100 crore citizens of India.", "Manufacturing capacity in the country today is ~100% localised for ceiling fans.", "Almost 90% of all fans sold in India are Made in India.", "A GST rate reduction will boost overall sales and market penetration of fans.", "It will promote GST compliance and plug instances of tax evasion, boosting overall revenue collection for the government."] },
       ],
       table: { title: "", headers: [], rows: [] },
     },
     {
-      id: "pre-budget-memorandum",
+      id: "budget",
+      eyebrow: "Engagement 05 - Ministry of Finance",
       title: "IFMA Pre-Budget Memorandum 2021-22",
-      description: "Under the pre-budget memorandum 2021-22, IFMA submitted key recommendations to the Government.",
+      highlightedTitle: "",
+      description: "With a hope that the Union Budget would be an occasion to make a re-assessment and give a further booster shot to the economy, IFMA made suggestions to address some immediate challenges at hand - such as GST on fans, reduction in BCD, and incentivising fan manufacturing to stimulate exports.",
       buttons: [],
-      cards: [],
-      table: {
-        title: "KEY RECOMMENDATIONS PRE-BUDGET 2021-22",
-        headers: ["Category", "Recommendation", "Rationale"],
-        rows: [
-          ["GST on Fans", "Lowering of GST on Ceiling Fans to 12%", "Fans are an essential household item across socio-economic strata. Lowering GST will make energy efficient fans affordable."],
-          ["Customs Duty", "Correction of Inverted Duty Structure on Fan Raw Materials", "Import duty on key raw materials like electrical steel & magnets is higher than finished component import."],
-          ["Raw Material Availability", "Ensuring Adequate Supply of Cold Rolled Non-Grain Oriented (CRNGO) Steel", "Domestic availability of high-grade electrical steel is critical for manufacturing high-efficiency ceiling fan motors."],
-        ],
-      },
+      cards: [
+        { title: "GST on fans", description: "", points: ["Recommendation: Lower the GST tax slab for fans to 5%.", "Rationale: Fans are an essential commodity of mass importance and are highly penetrated in every household in India and in the commercial sector, hence GST rates for fans should be reduced to 5%. Lowering the GST rate to 5% would immensely help the industry spur demand and provide a working capital cushion for manufacturers to invest in capacity expansion and energy efficiency."] },
+        { title: "Reduction in BCD", description: "", points: ["Recommendation: Reduce GST on BEE testing services to 5% and bring BCD for table, pedestal, blowers and portable fans back to 10%.", "Rationale: BCD was increased in February 2020, leading to an increase in consumer prices by ~15+%. For HSN codes 84145110, 84145130 and 84145190, only about 27% of annual demand is met by domestic production. The industry requires at least ~2-3 years to scale up, and lower duty on parts for induction/BLDC motors and PCBs would reduce input costs."] },
+        { title: "Incentivise fan manufacturing", description: "", points: ["Recommendation: Introduce incentives and subsidies for energy-efficient products and restore the weighted deduction on R&D expenditure of 200%.", "Rationale: Sector-specific incentives and subsidies will help create an ecosystem for competitiveness and scalability. Restoring the earlier 200% weighted deduction on R&D expenditure is critical for the Make in India initiative."] },
+      ],
+      table: { title: "", headers: [], rows: [] },
+    },
+    {
+      id: "lockdown",
+      eyebrow: "Engagement 06 - MHA & State Governments",
+      title: "Opening of shops during lockdown",
+      highlightedTitle: "",
+      description: "Fans are widely recognised as a cost-effective way to provide thermal comfort and as such they are a common man's protection against the heatwave, which poses a challenge to public health at large, especially in a tropical country like India.\n\nIFMA urged the Ministry of Home Affairs and various State governments to allow the opening of shops for electrical fans during the lockdown. As government continued to battle and balance health and economic activity, IFMA presented certain innovative solutions for assisting the government and industry to fight the COVID battle, which included:",
+      buttons: [],
+      cards: [
+        { title: "Sale across all zones, online and offline", description: "Fans should be allowed to be sold in green, red and orange districts - without the distinction of essential and non-essential - through both online and offline channels.", points: ["The SOPs for the opening of establishments are already there for offline shops; e-commerce companies are already observing very stringent health and hygiene measures and this channel must also be leveraged to meet the demands of customers.", "Limiting red zones to only essentials, especially through online sales, does not allow the industry to serve the largest demand zones for its products."] },
+        { title: "Expand the essentials list", description: "Expand the essentials to include electrical appliances - including the most critical summer product, the electric fan.", points: ["Since shops of non-essentials cannot open in containment zones, e-commerce companies should be allowed to deliver at the perimeter, edge or predesignated spots, or at the doorstep without any contact with the customer, through 100% contactless prepaid orders and delivery within the permitted delivery window."] },
+        { title: "Company-level passes, not individual ones", description: "A no-pass directive to be issued.", points: ["Traditional curfew passes issued against individual names are not feasible. Companies are unable to utilise these passes fully owing to high absenteeism, leading to wastage of passes, whereas local authorities see only the large number of passes issued to a company."] },
+      ],
+      table: { title: "", headers: [], rows: [] },
     },
   ],
   seo: {
@@ -378,6 +515,12 @@ export const createGovtPolicyPageInitialValues = (
         label: slug === "bee-star-rating" ? beeStarRatingContent.ctaLabel : "Read more on this BIS link",
         url: "",
       },
+    },
+    bisBeeContent: {
+      introHeadingPrimary: "",
+      introHeadingHighlight: "",
+      introParagraphs: [],
+      sections: [],
     },
     seo: {
       metaTitle: "",
