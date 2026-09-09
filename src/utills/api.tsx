@@ -134,11 +134,15 @@ export async function put(endpoint: string, data: object, jwtToken?: string) {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+
   try {
     const apiResponse = await fetch(url, {
       method: "PUT",
       body,
       headers,
+      signal: controller.signal,
     });
 
     const apiData: ApiResponse = await apiResponse.json();
@@ -151,6 +155,8 @@ export async function put(endpoint: string, data: object, jwtToken?: string) {
   } catch (error: any) {
     console.log("Api response error at api.tsx", error.message);
     toast.error(error.message);
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 

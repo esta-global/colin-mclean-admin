@@ -114,6 +114,7 @@ export function Router() {
         path="/govt-policies/:slug"
         element={<Pages.GovtPolicyPageContent />}
       />
+      <Route path="/bis-bee-page" element={<Pages.GovtPolicyPageContent />} />
       <Route path="/homepage" element={<Pages.HomepageContent />} />
       <Route path="/contactpage" element={<Pages.ContactPageContent />} />
       <Route path="/admin/contact-page" element={<Pages.ContactPageContent />} />

@@ -400,12 +400,14 @@ export function Sidebar() {
             "galleryCategories",
             "galleryImages",
             "/certificatepage",
-            "sustainabilityPage",
+            "/sustainabilityPage",
             "resourcePage",
             "faqsCategory",
             "faqs",
             "/privacypolicy",
             "/termandconditions",
+            "/bis-bee-page",
+            "/govt-policies/atmanirbhar",
           ])}`}
         >
           <a
@@ -445,6 +447,24 @@ export function Sidebar() {
                   to="/aboutpage"
                 >
                   About Page
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${handleActiveLink("/bis-bee-page")}`}
+                  to="/bis-bee-page"
+                >
+                  BIS &amp; BEE Page
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${handleActiveLink("/govt-policies/atmanirbhar")}`}
+                  to="/govt-policies/atmanirbhar"
+                >
+                  Atmanirbhar Page
                 </Link>
               </li>
 
@@ -505,7 +525,7 @@ export function Sidebar() {
                   className={`nav-link ${handleActiveLink("/industry-details-page")}`}
                   to="/industry-details-page"
                 >
-                  Industry Details Page
+                  Industry Circle Page
                 </Link>
               </li>
 
@@ -563,7 +583,7 @@ export function Sidebar() {
                 </Link>
               </li>
 
-              <li className="nav-item d-none">
+              <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink(
                     "/galleryCategories",
@@ -598,7 +618,7 @@ export function Sidebar() {
                   Certificate Page
                 </Link>
               </li>
-              <li className="nav-item d-none">
+              <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink(
                     "/sustainabilityPage",
@@ -671,14 +691,6 @@ export function Sidebar() {
                     </Link>
                   </li>
               
-              <li className="nav-item">
-                <Link
-                  className={`nav-link ${handleActiveLink("/govt-policies/atmanirbhar")}`}
-                  to="/govt-policies/atmanirbhar"
-                >
-                  Atmanirbhar
-                </Link>
-              </li>
               <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink("/govt-policies/govt-engagements")}`}
