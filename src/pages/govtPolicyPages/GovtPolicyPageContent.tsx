@@ -17,6 +17,7 @@ import { get, post, put } from "../../utills";
 import { addUrlToFile } from "../../utills/addUrlToFile";
 import {
   GovtPolicyPageValues,
+  createGovtEngagementDefaultValues,
   createGovtPolicyPageInitialValues,
   govtPolicyPageSchema,
   govtPolicyPages,
@@ -104,6 +105,29 @@ function stripApiFields(data: ApiBody): Partial<GovtPolicyPageValues> {
   return payload;
 }
 
+function atmanirbharSectionsToHtml(
+  sections: GovtPolicyPageValues["atmanirbharSections"] = [],
+) {
+  return sections
+    .map((section) => {
+      const paragraphs = section.paragraphs
+        .map((paragraph) =>
+          paragraph.style === "highlighted"
+            ? `<blockquote>${paragraph.text}</blockquote>`
+            : `<p>${paragraph.text}</p>`,
+        )
+        .join("\n");
+      const stats = section.stats.length
+        ? `<ul>${section.stats.map((stat) => `<li><strong>${stat.value}</strong> - ${stat.label}</li>`).join("")}</ul>`
+        : "";
+      const cards = section.cards.length
+        ? `<ol>${section.cards.map((card) => `<li><strong>${card.title}:</strong> ${card.description}</li>`).join("")}</ol>`
+        : "";
+      return `<section id="${section.id}"><p class="eyebrow">${section.eyebrow}</p><h2>${section.title} <span>${section.highlightedTitle}</span></h2>${paragraphs}${stats}${cards}</section>`;
+    })
+    .join("\n");
+}
+
 function normalizeValues(values: GovtPolicyPageValues): GovtPolicyPageValues {
   if (!values) return values;
   const ds = values.detailsSection || {
@@ -120,6 +144,7 @@ function normalizeValues(values: GovtPolicyPageValues): GovtPolicyPageValues {
     metaDescription: "",
     keywords: [],
   };
+  const richContent = values.richContent || { html: "" };
   const sections = (values.sections || []).map((section) => {
     const normalizedSection = { ...section };
     if (
@@ -193,6 +218,33 @@ function normalizeValues(values: GovtPolicyPageValues): GovtPolicyPageValues {
   return {
     ...values,
     sections,
+    atmanirbharSections: (values.atmanirbharSections || []).map((section) => {
+      const paragraphs = (
+        section.paragraphs as unknown as Array<string | GovtEngagementParagraph>
+      )
+        .map((paragraph) =>
+          typeof paragraph === "string"
+            ? { text: paragraph.trim(), style: "normal" as const }
+            : {
+                text: (paragraph.text || "").trim(),
+                style:
+                  paragraph.style === "highlighted"
+                    ? ("highlighted" as const)
+                    : ("normal" as const),
+              },
+        )
+        .filter((paragraph) => paragraph.text);
+      if (
+        section.highlightedParagraph?.trim() &&
+        !paragraphs.some((paragraph) => paragraph.style === "highlighted")
+      ) {
+        paragraphs.push({
+          text: section.highlightedParagraph.trim(),
+          style: "highlighted",
+        });
+      }
+      return { ...section, paragraphs };
+    }),
     detailsSection: {
       heading: ds.heading || "",
       paragraphs: (ds.paragraphs || [])
@@ -217,7 +269,9 @@ function normalizeValues(values: GovtPolicyPageValues): GovtPolicyPageValues {
       },
     },
     richContent: {
-      html: richContent.html || "",
+      html: values.atmanirbharSections?.length
+        ? atmanirbharSectionsToHtml(values.atmanirbharSections)
+        : richContent.html || "",
     },
     seo: {
       metaTitle: seo.metaTitle || "",
@@ -227,6 +281,15 @@ function normalizeValues(values: GovtPolicyPageValues): GovtPolicyPageValues {
         .filter(Boolean),
     },
   };
+}
+
+function mergeGovtPageValues(
+  initialValues: GovtPolicyPageValues,
+  incomingValues: unknown,
+  slug: string,
+): GovtPolicyPageValues {
+  const mergedValues = mergeValues(initialValues, incomingValues);
+  return mergedValues;
 }
 
 function SectionHeading({
@@ -241,6 +304,319 @@ function SectionHeading({
       <span>{eyebrow}</span>
       <h2>{title}</h2>
     </div>
+  );
+}
+
+function AtmanirbharSectionsEditor({
+  values,
+  setFieldValue,
+}: {
+  values: GovtPolicyPageValues;
+  setFieldValue: (field: string, value: unknown) => void;
+}) {
+  const sections = values.atmanirbharSections || [];
+  const update = (field: string, value: unknown) =>
+    setFieldValue(
+      field ? `atmanirbharSections.${field}` : "atmanirbharSections",
+      value,
+    );
+
+  return (
+    <section className="card about-page-card">
+      <div className="card-body">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <SectionHeading eyebrow="Atmanirbhar" title="Content Sections" />
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() =>
+              update("", [
+                ...sections,
+                {
+                  id: `section-${Date.now()}`,
+                  eyebrow: "",
+                  title: "",
+                  highlightedTitle: "",
+                  paragraphs: [],
+                  highlightedParagraph: "",
+                  stats: [],
+                  cards: [],
+                },
+              ])
+            }
+            type="button"
+          >
+            + Add Section
+          </button>
+        </div>
+        {sections.map((section, sectionIndex) => (
+          <div
+            className="border rounded p-3 mb-4 bg-light"
+            key={`${section.id}-${sectionIndex}`}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <strong className="text-primary fs-5">
+                Section #{sectionIndex + 1}: {section.id || "Untitled"}
+              </strong>
+              <button
+                className="btn btn-sm btn-danger"
+                onClick={() =>
+                  update(
+                    "",
+                    sections.filter((_, index) => index !== sectionIndex),
+                  )
+                }
+                type="button"
+              >
+                <i className="fa fa-trash"></i> Remove Section
+              </button>
+            </div>
+            <div className="row g-3 mb-3">
+              <div className="col-md-3">
+                <label className="form-label">Section ID</label>
+                <input
+                  className="form-control"
+                  value={section.id}
+                  onChange={(event) =>
+                    update(`${sectionIndex}.id`, event.target.value)
+                  }
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Eyebrow</label>
+                <input
+                  className="form-control"
+                  value={section.eyebrow}
+                  onChange={(event) =>
+                    update(`${sectionIndex}.eyebrow`, event.target.value)
+                  }
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Main Heading</label>
+                <input
+                  className="form-control"
+                  value={section.title}
+                  onChange={(event) =>
+                    update(`${sectionIndex}.title`, event.target.value)
+                  }
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Highlighted Heading</label>
+                <input
+                  className="form-control"
+                  value={section.highlightedTitle}
+                  onChange={(event) =>
+                    update(
+                      `${sectionIndex}.highlightedTitle`,
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+            </div>
+            <div className="mb-3">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <strong>Paragraphs</strong>
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() =>
+                    update(`${sectionIndex}.paragraphs`, [
+                      ...section.paragraphs,
+                      { text: "", style: "normal" },
+                    ])
+                  }
+                  type="button"
+                >
+                  + Add Paragraph
+                </button>
+              </div>
+              {section.paragraphs.map((paragraph, index) => (
+                <div className="row g-2 mb-2" key={index}>
+                  <div className="col-md-3">
+                    <select
+                      className="form-select"
+                      value={paragraph.style}
+                      onChange={(event) =>
+                        update(
+                          `${sectionIndex}.paragraphs.${index}.style`,
+                          event.target.value,
+                        )
+                      }
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="highlighted">Highlighted</option>
+                    </select>
+                  </div>
+                  <div className="col-md-8">
+                    <textarea
+                      className="form-control"
+                      rows={2}
+                      value={paragraph.text}
+                      onChange={(event) =>
+                        update(
+                          `${sectionIndex}.paragraphs.${index}.text`,
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Paragraph text"
+                    />
+                  </div>
+                  <div className="col-md-1">
+                    <button
+                      className="btn btn-sm btn-outline-danger w-100"
+                      onClick={() =>
+                        update(
+                          `${sectionIndex}.paragraphs`,
+                          section.paragraphs.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          ),
+                        )
+                      }
+                      type="button"
+                    >
+                      <i className="fa fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mb-3 border rounded p-2 bg-white">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <strong>Stats</strong>
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() =>
+                    update(`${sectionIndex}.stats`, [
+                      ...section.stats,
+                      { value: "", label: "" },
+                    ])
+                  }
+                  type="button"
+                >
+                  + Add Stat
+                </button>
+              </div>
+              {section.stats.map((stat, index) => (
+                <div className="row g-2 mb-2" key={index}>
+                  <div className="col-md-4">
+                    <input
+                      className="form-control"
+                      placeholder="Value"
+                      value={stat.value}
+                      onChange={(event) =>
+                        update(
+                          `${sectionIndex}.stats.${index}.value`,
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="col-md-7">
+                    <input
+                      className="form-control"
+                      placeholder="Label"
+                      value={stat.label}
+                      onChange={(event) =>
+                        update(
+                          `${sectionIndex}.stats.${index}.label`,
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="col-md-1">
+                    <button
+                      className="btn btn-sm btn-outline-danger w-100"
+                      onClick={() =>
+                        update(
+                          `${sectionIndex}.stats`,
+                          section.stats.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          ),
+                        )
+                      }
+                      type="button"
+                    >
+                      <i className="fa fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border rounded p-2 bg-white">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <strong>Cards / Pillars</strong>
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() =>
+                    update(`${sectionIndex}.cards`, [
+                      ...section.cards,
+                      { title: "", description: "" },
+                    ])
+                  }
+                  type="button"
+                >
+                  + Add Card
+                </button>
+              </div>
+              {section.cards.map((card, index) => (
+                <div className="row g-2 mb-2" key={index}>
+                  <div className="col-md-4">
+                    <input
+                      className="form-control"
+                      placeholder="Card title"
+                      value={card.title}
+                      onChange={(event) =>
+                        update(
+                          `${sectionIndex}.cards.${index}.title`,
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="col-md-7">
+                    <textarea
+                      className="form-control"
+                      rows={2}
+                      placeholder="Card description"
+                      value={card.description}
+                      onChange={(event) =>
+                        update(
+                          `${sectionIndex}.cards.${index}.description`,
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="col-md-1">
+                    <button
+                      className="btn btn-sm btn-outline-danger w-100"
+                      onClick={() =>
+                        update(
+                          `${sectionIndex}.cards`,
+                          section.cards.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          ),
+                        )
+                      }
+                      type="button"
+                    >
+                      <i className="fa fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+        {!sections.length ? (
+          <div className="text-muted">
+            No sections yet. Add a section to begin.
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -837,10 +1213,21 @@ export function GovtPolicyPageContent() {
   const pageConfig =
     govtPolicyPages.find((page) => page.slug === slug) || govtPolicyPages[0];
   const isRichTextPage = pageConfig.slug === "atmanirbhar";
-  const emptyValues = useMemo(
-    () => createGovtPolicyPageInitialValues(pageConfig.label, pageConfig.slug),
-    [pageConfig.label, pageConfig.slug],
-  );
+  const emptyValues = useMemo(() => {
+    const initialValues = createGovtPolicyPageInitialValues(
+      pageConfig.label,
+      pageConfig.slug,
+    );
+    if (pageConfig.slug !== "atmanirbhar") return initialValues;
+    return {
+      ...initialValues,
+      bannerSection: { title: "", highlightedTitle: "", image: "" },
+      detailsSection: { ...initialValues.detailsSection, heading: "" },
+      richContent: { html: "" },
+      atmanirbharSections: [],
+      seo: { metaTitle: "", metaDescription: "", keywords: [] },
+    };
+  }, [pageConfig.label, pageConfig.slug]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [hasExistingData, setHasExistingData] = useState(false);
@@ -873,21 +1260,31 @@ export function GovtPolicyPageContent() {
       helpers: FormikHelpers<GovtPolicyPageValues>,
     ) => {
       setUpdating(true);
-      const payload = normalizeValues(formValues);
-      const apiResponse = hasExistingData
-        ? await put(`/govtPolicyPages/${slug}`, payload)
-        : await post(`/govtPolicyPages/${slug}`, payload, true);
+      try {
+        const payload = normalizeValues(formValues);
+        const apiResponse = hasExistingData
+          ? await put(`/govtPolicyPages/${slug}`, payload)
+          : await post(`/govtPolicyPages/${slug}`, payload, true);
 
-      if (apiResponse?.status === 200) {
-        toast.success(
-          apiResponse?.message || "Govt policy page saved successfully",
-        );
-        syncSavedValues(apiResponse.body as ApiBody | undefined, payload);
-      } else {
-        helpers.setErrors(apiResponse?.errors);
-        toast.error(apiResponse?.message || "Unable to save govt policy page");
+        if (apiResponse?.status === 200) {
+          toast.success(
+            hasExistingData
+              ? `${pageConfig.label} page data updated!`
+              : `${pageConfig.label} page data created!`,
+          );
+          syncSavedValues(apiResponse.body as ApiBody | undefined, payload);
+        } else {
+          helpers.setErrors(apiResponse?.errors);
+          toast.error(
+            apiResponse?.message || "Unable to save govt policy page",
+          );
+        }
+      } catch (error) {
+        console.error("Unable to save government policy page", error);
+        toast.error("Unable to save government policy page");
+      } finally {
+        setUpdating(false);
       }
-      setUpdating(false);
     },
   });
 
@@ -913,7 +1310,11 @@ export function GovtPolicyPageContent() {
     const nextValues = normalizeValues(
       migrateLegacyEngagementContent(
         migrateLegacyParagraphs(
-          mergeValues(emptyValues, body ? stripApiFields(body) : fallback),
+          mergeGovtPageValues(
+            emptyValues,
+            body ? stripApiFields(body) : fallback,
+            slug,
+          ),
         ),
       ),
     );
@@ -935,10 +1336,7 @@ export function GovtPolicyPageContent() {
     );
     if (!hasLegacyProposalData) return valuesToMigrate;
 
-    const referenceValues = createGovtPolicyPageInitialValues(
-      "Government Engagements",
-      "govt-engagements",
-    );
+    const referenceValues = createGovtEngagementDefaultValues();
     return {
       ...valuesToMigrate,
       hero: referenceValues.hero,
@@ -971,23 +1369,32 @@ export function GovtPolicyPageContent() {
   useEffect(() => {
     async function fetchPage() {
       setLoading(true);
-      const apiResponse = await get(`/govtPolicyPages/${slug}`, true);
-      if (apiResponse?.status === 200 && apiResponse.body) {
-        const body = apiResponse.body as ApiBody;
-        const nextValues = normalizeValues(
-          migrateLegacyEngagementContent(
-            migrateLegacyParagraphs(
-              mergeValues(emptyValues, stripApiFields(body)),
+      try {
+        const apiResponse = await get(`/govtPolicyPages/${slug}`, true);
+        if (apiResponse?.status === 200 && apiResponse.body) {
+          const body = apiResponse.body as ApiBody;
+          const nextValues = normalizeValues(
+            migrateLegacyEngagementContent(
+              migrateLegacyParagraphs(
+                mergeGovtPageValues(emptyValues, stripApiFields(body), slug),
+              ),
             ),
-          ),
-        );
-        setValues(nextValues);
-        setHasExistingData(Boolean(body._id));
-      } else {
+          );
+          setValues(nextValues);
+          setHasExistingData(Boolean(body._id));
+        } else {
+          setValues(emptyValues);
+          setHasExistingData(false);
+          if (apiResponse?.message) toast.error(apiResponse.message);
+        }
+      } catch (error) {
+        console.error("Unable to load government policy page", error);
         setValues(emptyValues);
         setHasExistingData(false);
+        toast.error("Unable to load government policy page");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchPage();
   }, [emptyValues, setValues, slug]);
@@ -2079,47 +2486,12 @@ export function GovtPolicyPageContent() {
                       <div className="card-body">
                         <SectionHeading
                           eyebrow="Govt Policies"
-                          title="Rich Content Section"
+                          title="Content Sections"
                         />
-                        <div className="d-flex justify-content-end mb-2">
-                          <button
-                            className="btn btn-sm btn-outline-primary"
-                            data-bs-target="#selectGovtPolicyImageFileModal"
-                            data-bs-toggle="modal"
-                            onClick={() =>
-                              setSelectedFileFor("__richContentImage")
-                            }
-                            type="button"
-                          >
-                            <i className="fa fa-image me-1"></i>
-                            Insert Image
-                          </button>
-                        </div>
-                        <div className="terms-editor-shell">
-                          <CKEditor
-                            editor={ClassicEditor as any}
-                            config={{
-                              extraPlugins: [mediaUploadAdapterPlugin],
-                            }}
-                            data={values.richContent?.html || ""}
-                            onChange={(__, editor) => {
-                              setFieldValue(
-                                "richContent.html",
-                                editor.getData(),
-                              );
-                            }}
-                            onError={(error) => {
-                              toast.error(
-                                error?.message || "Unable to upload image",
-                              );
-                            }}
-                            onBlur={() => {
-                              setFieldTouched("richContent.html", true);
-                            }}
-                            onFocus={() => {}}
-                            id="richContentHtml"
-                          />
-                        </div>
+                        <AtmanirbharSectionsEditor
+                          values={values}
+                          setFieldValue={setFieldValue}
+                        />
                       </div>
                     </section>
                   ) : (

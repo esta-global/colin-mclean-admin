@@ -1,15 +1,10 @@
-type HostType = "localhost" | "";
-
-const hostname: HostType = window.location.hostname as HostType;
+const hostname = window.location.hostname;
+const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
 
 export const BASE_URL = "http://localhost:5173";
 
 export const API_URL =
-  hostname == "localhost"
-    ? "http://localhost:5201/api/v1"
-    : "";
+  isLocalhost ? "http://localhost:5200/api/v1" : "";
 
 export const FILE_URL =
-  hostname == "localhost"
-    ? "http://localhost:5201/uploads"
-    : "";
+  isLocalhost ? "http://localhost:5200/uploads" : "";

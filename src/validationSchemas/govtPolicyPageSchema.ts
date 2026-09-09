@@ -46,6 +46,17 @@ export interface GovtEngagementParagraph {
   style: "normal" | "highlighted";
 }
 
+export interface AtmanirbharSection {
+  id: string;
+  eyebrow: string;
+  title: string;
+  highlightedTitle: string;
+  paragraphs: GovtEngagementParagraph[];
+  highlightedParagraph: string;
+  stats: { value: string; label: string }[];
+  cards: { title: string; description: string }[];
+}
+
 export interface BisBeeTable {
   type: string;
   title: string;
@@ -150,6 +161,7 @@ export interface GovtPolicyPageValues {
   richContent: {
     html: string;
   };
+  atmanirbharSections?: AtmanirbharSection[];
   seo: {
     metaTitle: string;
     metaDescription: string;
@@ -308,6 +320,20 @@ export const govtPolicyPageSchema = Yup.object({
   richContent: Yup.object({
     html: stringField(),
   }),
+  atmanirbharSections: Yup.array().of(
+    Yup.object({
+      id: stringField(),
+      eyebrow: stringField(),
+      title: stringField(),
+      highlightedTitle: stringField(),
+      paragraphs: Yup.array().of(
+        Yup.object({ text: stringField(), style: Yup.mixed<"normal" | "highlighted">().oneOf(["normal", "highlighted"]).required() }),
+      ),
+      highlightedParagraph: stringField(),
+      stats: Yup.array().of(Yup.object({ value: stringField(), label: stringField() })),
+      cards: Yup.array().of(Yup.object({ title: stringField(), description: stringField() })),
+    }),
+  ),
   seo: Yup.object({
     metaTitle: stringField(),
     metaDescription: stringField(),
@@ -326,11 +352,34 @@ export const govtPolicyPages = [
 ];
 
 const atmanirbharRichHtml = `
-<p><strong><span style="color: #008cff;">The Indian fan industry, comprising of several players has been at the forefront of innovation and adoption of new technology for the greater good of the society. Having one of the highest penetration levels</span></strong> close to ~80% market penetration, touching the lives of 100 crore citizens of India, fans are a mass market product due to their functionality and benefit against the ever-looming heatwave in India.</p>
-<p><strong><span style="color: #008cff;">We are proud to state the fact that the fan industry is</span></strong> electrical fans industry and is one of the most highly indigenized industries. We are happy to inform you that the manufacturing capacity in the country today is ~100% localized for ceiling fans. Further, almost 90% of all the fans sold in India are 'Made-in-India'.</p>
-<p><strong><span style="color: #008cff;">The industry ties itself to the Atmanirbhar Bharat Abhiyaan</span></strong> or <strong><span style="color: #008cff;">Self-reliant India</span></strong> vision of our Hon'ble PM Shri Narendra Modi.</p>
-<p>With further impetus in the form of research and development of a newer form of components for fans that are energy efficient such as BLDC motors, the aim is to make the industry independent of import of raw material and self-reliant in all senses.</p>
+<h2>Self-reliant India</h2>
+<h3>An industry made in India</h3>
+<p>The Indian fan industry, comprising of several players, has been at the forefront of innovation and adoption of new technology for the greater good of the society. Having one of the highest penetration levels - close to ~80% market penetration, touching the lives of 100 crore citizens of India - fans are a mass market product due to their functionality and benefit against the ever-looming heatwave in India.</p>
+<p><strong>Almost 90% of all the fans sold in India are 'Made-in-India'.</strong></p>
+<ul>
+  <li><strong>~80%</strong> - Market penetration</li>
+  <li><strong>100 crore</strong> - Citizens whose lives fans touch</li>
+  <li><strong>~100%</strong> - Localised manufacturing capacity for ceiling fans</li>
+  <li><strong>~90%</strong> - Of fans sold in India are Made in India</li>
+</ul>
+<h2>The manufacturing base</h2>
+<h3>One of the most highly indigenised industries</h3>
+<p>We are proud to state the fact that the electrical fans industry is one of the most highly indigenised industries. We are happy to inform you that the manufacturing capacity in the country today is ~100% localised for ceiling fans. Further, almost 90% of all the fans sold in India are 'Made-in-India'.</p>
+<blockquote>The industry ties itself to the Atmanirbhar Bharat Abhiyaan - the Self-reliant India vision of our Hon'ble Prime Minister Shri Narendra Modi.</blockquote>
+<p>With further impetus in the form of research and development of a newer form of components for fans that are energy efficient, such as BLDC motors, the aim is to make the industry independent of import of raw material and self-reliant in all senses.</p>
+<h2>Atmanirbhar Bharat</h2>
+<h3>Touching all the pillars of self-reliance</h3>
 <p>The fan industry touches all the pillars of self-reliance, viz.</p>
+<ol>
+  <li><strong>Economy:</strong> A mass-market product with one of the highest penetration levels in the country, supporting an entire domestic value chain of vendors, distributors and channel partners.</li>
+  <li><strong>Infrastructure:</strong> Manufacturing capacity in the country today is ~100% localised for ceiling fans, built on plants and tooling established within India.</li>
+  <li><strong>System:</strong> Research and development of newer, energy-efficient components such as BLDC motors is moving the industry to technology-driven production.</li>
+  <li><strong>Vibrant demography:</strong> Fans touch the lives of 100 crore citizens of India - a product made by Indians, for Indian homes and workplaces.</li>
+  <li><strong>Demand:</strong> Almost 90% of all fans sold in India are Made in India, meeting domestic demand from domestic production rather than imports.</li>
+</ol>
+<h2>The aim</h2>
+<h3>Independent of imported raw material. Self-reliant in all senses.</h3>
+<p>Energy-efficient innovation - led by BLDC motors and continued investment in research and development - is what carries the industry there.</p>
 `;
 
 const beeStarRatingContent = {
@@ -694,6 +743,60 @@ export const createGovtPolicyPageInitialValues = (
         bottomParagraphs: [],
         cta: { label: "", url: "" },
       },
+      richContent: { html: atmanirbharRichHtml },
+      atmanirbharSections: [
+        {
+          id: "lead",
+          eyebrow: "Self-reliant India",
+          title: "An industry",
+          highlightedTitle: "made in India",
+          paragraphs: [{ text: "The Indian fan industry, comprising of several players, has been at the forefront of innovation and adoption of new technology for the greater good of the society. Having one of the highest penetration levels - close to ~80% market penetration, touching the lives of 100 crore citizens of India - fans are a mass market product due to their functionality and benefit against the ever-looming heatwave in India.", style: "normal" }],
+          highlightedParagraph: "Almost 90% of all the fans sold in India are 'Made-in-India'.",
+          stats: [
+            { value: "~80%", label: "Market penetration" },
+            { value: "100 crore", label: "Citizens whose lives fans touch" },
+            { value: "~100%", label: "Localised manufacturing capacity for ceiling fans" },
+            { value: "~90%", label: "Of fans sold in India are Made in India" },
+          ],
+          cards: [],
+        },
+        {
+          id: "indigenised",
+          eyebrow: "The manufacturing base",
+          title: "One of the most",
+          highlightedTitle: "highly indigenised industries",
+          paragraphs: [{ text: "We are proud to state the fact that the electrical fans industry is one of the most highly indigenised industries. We are happy to inform you that the manufacturing capacity in the country today is ~100% localised for ceiling fans. Further, almost 90% of all the fans sold in India are 'Made-in-India'.", style: "normal" }, { text: "With further impetus in the form of research and development of a newer form of components for fans that are energy efficient, such as BLDC motors, the aim is to make the industry independent of import of raw material and self-reliant in all senses.", style: "normal" }],
+          highlightedParagraph: "The industry ties itself to the Atmanirbhar Bharat Abhiyaan - the Self-reliant India vision of our Hon'ble Prime Minister Shri Narendra Modi.",
+          stats: [],
+          cards: [],
+        },
+        {
+          id: "pillars",
+          eyebrow: "Atmanirbhar Bharat",
+          title: "Touching all the",
+          highlightedTitle: "pillars of self-reliance",
+          paragraphs: [{ text: "The fan industry touches all the pillars of self-reliance, viz.", style: "normal" }],
+          highlightedParagraph: "",
+          stats: [],
+          cards: [
+            { title: "Economy", description: "A mass-market product with one of the highest penetration levels in the country, supporting an entire domestic value chain of vendors, distributors and channel partners." },
+            { title: "Infrastructure", description: "Manufacturing capacity in the country today is ~100% localised for ceiling fans, built on plants and tooling established within India." },
+            { title: "System", description: "Research and development of newer, energy-efficient components such as BLDC motors is moving the industry to technology-driven production." },
+            { title: "Vibrant demography", description: "Fans touch the lives of 100 crore citizens of India - a product made by Indians, for Indian homes and workplaces." },
+            { title: "Demand", description: "Almost 90% of all fans sold in India are Made in India, meeting domestic demand from domestic production rather than imports." },
+          ],
+        },
+        {
+          id: "aim",
+          eyebrow: "The aim",
+          title: "Independent of imported raw material.",
+          highlightedTitle: "Self-reliant in all senses.",
+          paragraphs: [{ text: "Energy-efficient innovation - led by BLDC motors and continued investment in research and development - is what carries the industry there.", style: "normal" }],
+          highlightedParagraph: "",
+          stats: [],
+          cards: [],
+        },
+      ],
       seo: {
         metaTitle: "Atmanirbhar | IFMA",
         metaDescription:
@@ -709,10 +812,30 @@ export const createGovtPolicyPageInitialValues = (
   }
 
   if (slug === "govt-engagements") {
-    const defaultEngagements = createGovtEngagementDefaultValues();
     return {
       ...baseValues,
-      ...defaultEngagements,
+      hero: {
+        title: "",
+        highlightedTitle: "",
+        bannerImage: { url: "", alt: "" },
+      },
+      introduction: {
+        eyebrow: "",
+        title: "",
+        highlightedTitle: "",
+        body: "",
+        concernsHeading: "",
+      },
+      issues: {
+        eyebrow: "",
+        title: "",
+        highlightedTitle: "",
+        description: "",
+        supplySide: { title: "", points: [] },
+        demandSide: { title: "", points: [] },
+      },
+      sections: [],
+      seo: { metaTitle: "", metaDescription: "", keywords: [] },
     };
   }
 
