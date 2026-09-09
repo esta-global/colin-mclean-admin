@@ -7,9 +7,9 @@ export const BASE_URL = "http://localhost:5173";
 export const API_URL =
   hostname == "localhost"
     ? "http://localhost:5201/api/v1"
-    : "";
+    : "https://ifma-api.esta-dev.com/api/v1";
 
 export const FILE_URL =
   hostname == "localhost"
     ? "http://localhost:5201/uploads"
-    : "";
+    : "https://ifma-api.esta-dev.com/api/v1";
