@@ -13578,6 +13578,32 @@ ul.timeline>li:before {
   white-space: nowrap;
 }
 
+.executive-table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  width: 100%;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  text-transform: inherit;
+}
+
+.executive-table-sort-button i {
+  color: #8aa0bd;
+  font-size: 0.72rem;
+}
+
+.executive-table-sort-button:hover,
+.executive-table-sort-button:focus {
+  color: #005bd8;
+  outline: 0;
+}
+
 .executive-members-table td {
   padding: 0.85rem 1rem;
   border-bottom: 1px solid #edf2f8;
