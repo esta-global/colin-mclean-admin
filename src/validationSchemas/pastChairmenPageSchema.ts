@@ -14,7 +14,11 @@ export interface PastChairmenPageValues {
     image: string;
   };
   introSection: {
+    eyebrow: string;
+    title: string;
+    highlightedTitle: string;
     text: string;
+    paragraphs: string[];
     highlightText: string;
   };
   chairmenSection: {
@@ -44,7 +48,11 @@ export const pastChairmenPageSchema = Yup.object({
     image: stringField(),
   }),
   introSection: Yup.object({
+    eyebrow: stringField(),
+    title: stringField(),
+    highlightedTitle: stringField(),
     text: stringField(),
+    paragraphs: Yup.array().of(stringField()),
     highlightText: stringField(),
   }),
   chairmenSection: Yup.object({
@@ -72,8 +80,15 @@ export const pastChairmenPageInitialValues: PastChairmenPageValues = {
     image: "",
   },
   introSection: {
+    eyebrow: "Leadership Through The Years",
+    title: "Illustrious. Industrious.",
+    highlightedTitle: "Always Forward-Looking.",
     text:
       "IFMA has had good fortune of having illustrious industrialists and senior executives of fan industries at its helm. The contribution to the growth and well being of the industry has indeed been the outcome of leadership provided by each of them.",
+    paragraphs: [
+      "IFMA has had good fortune of having illustrious industrialists and senior executives of fan industries at its helm.",
+      "The contribution to the growth and well being of the industry has indeed been the outcome of leadership provided by each of them.",
+    ],
     highlightText:
       "A solid pedestal built by them is now ready to be nourished and taken to newer heights.",
   },

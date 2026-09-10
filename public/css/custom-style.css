@@ -13559,7 +13559,7 @@ ul.timeline>li:before {
 
 .executive-members-table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1080px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -13648,6 +13648,26 @@ ul.timeline>li:before {
   border: 1px solid #ffd1d1;
   color: #dc2626;
   background: #ffffff;
+}
+
+.executive-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 0.62rem;
+  border: 1px solid #ffd1d1;
+  border-radius: 999px;
+  color: #dc2626;
+  background: #fff8f8;
+  font-size: 0.72rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.executive-status-badge.is-active {
+  border-color: #a9efd5;
+  color: #047857;
+  background: #ecfdf5;
 }
 
 .executive-table-state {
@@ -14241,11 +14261,39 @@ ul.timeline>li:before {
   display: none;
 }
 
+.executive-member-field-grid,
 .executive-member-disabled-fields {
   display: grid;
   gap: 0.65rem;
+}
+
+.executive-member-field-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.executive-member-disabled-fields {
   padding-top: 0.4rem;
   border-top: 1px solid #edf2f8;
+}
+
+.executive-member-switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  width: 100%;
+  border: 1px solid #ffd1d1;
+  border-radius: 8px;
+  color: #dc2626;
+  background: #fff8f8;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.executive-member-switch button.is-active {
+  border-color: #a9efd5;
+  color: #047857;
+  background: #ecfdf5;
 }
 
 .executive-delete-modal-shell {

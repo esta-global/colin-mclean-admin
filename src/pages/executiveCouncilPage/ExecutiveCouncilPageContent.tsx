@@ -84,14 +84,38 @@ function normalizeExecutiveCouncilValues(
 ): ExecutiveCouncilPageValues {
   return {
     ...values,
+    introSection: {
+      ...values.introSection,
+      eyebrow: values.introSection.eyebrow.trim(),
+      title: values.introSection.title.trim(),
+      highlightedTitle: values.introSection.highlightedTitle.trim(),
+      text: values.introSection.text.trim(),
+      paragraphs: values.introSection.paragraphs
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean),
+      highlightText: values.introSection.highlightText.trim(),
+    },
     councilSection: {
       ...values.councilSection,
-      members: values.councilSection.members.map((member) => ({
-        name: member.name.trim(),
-        designation: member.designation.trim(),
-        company: member.company.trim(),
-        image: member.image,
-      })),
+      heading: values.councilSection.heading.trim(),
+      highlightedHeading: values.councilSection.highlightedHeading.trim(),
+      description: values.councilSection.description.trim(),
+      members: values.councilSection.members
+        .map((member, index) => ({
+          name: member.name.trim(),
+          designation: member.designation.trim(),
+          company: member.company.trim(),
+          image: member.image || "",
+          sortOrder: Number.isFinite(Number(member.sortOrder))
+            ? Number(member.sortOrder)
+            : index + 1,
+          isActive: member.isActive ?? true,
+        }))
+        .sort((firstMember, secondMember) => {
+          const firstOrder = firstMember.sortOrder || Number.MAX_SAFE_INTEGER;
+          const secondOrder = secondMember.sortOrder || Number.MAX_SAFE_INTEGER;
+          return firstOrder - secondOrder;
+        }),
     },
     seo: {
       ...values.seo,
@@ -159,14 +183,14 @@ function AvatarUpload({
         type="button"
       >
         {member.image ? (
-          <img src={addUrlToFile(member.image)} alt={member.name || "Member"} />
+          <img src={addUrlToFile(member.image)} alt={member.company || member.name || "Company logo"} />
         ) : (
-          <i className="fa fa-user"></i>
+          <i className="fa fa-image"></i>
         )}
       </button>
       <div>
-        <strong>Profile Photo</strong>
-        <span>Upload or select from media library</span>
+        <strong>Company Logo</strong>
+        <span>Upload or select the logo shown on the card</span>
         <div className="executive-member-avatar-actions">
           <label>
             Upload
@@ -204,6 +228,7 @@ function ExecutiveCouncilForm({
   draft,
   errors,
   onChange,
+  onToggle,
   onPickImage,
   onUploadImage,
   uploadingImage,
@@ -211,6 +236,7 @@ function ExecutiveCouncilForm({
   draft: MemberDraft;
   errors: MemberFormErrors;
   onChange: (field: keyof MemberDraft, value: string) => void;
+  onToggle: (field: "isActive", value: boolean) => void;
   onPickImage: () => void;
   onUploadImage: (file: File) => void;
   uploadingImage: boolean;
@@ -256,10 +282,29 @@ function ExecutiveCouncilForm({
         />
         {errors.company ? <small>{errors.company}</small> : null}
       </label>
-      <div className="executive-member-disabled-fields">
-        <input className="form-control" disabled placeholder="Email (requires API field)" />
-        <input className="form-control" disabled placeholder="Phone (requires API field)" />
-        <input className="form-control" disabled placeholder="LinkedIn URL (requires API field)" />
+      <div className="executive-member-field-grid">
+        <label>
+          <span>Display Order</span>
+          <input
+            className="form-control"
+            min={0}
+            onChange={(event) => onChange("sortOrder", event.target.value)}
+            placeholder="1"
+            type="number"
+            value={draft.sortOrder}
+          />
+        </label>
+        <label className="executive-member-switch">
+          <span>Status</span>
+          <button
+            aria-pressed={draft.isActive}
+            className={draft.isActive ? "is-active" : ""}
+            onClick={() => onToggle("isActive", !draft.isActive)}
+            type="button"
+          >
+            {draft.isActive ? "Active" : "Inactive"}
+          </button>
+        </label>
       </div>
     </div>
   );
@@ -274,6 +319,7 @@ function ExecutiveCouncilDrawer({
   uploadingImage,
   onClose,
   onChange,
+  onToggle,
   onSave,
   onPickImage,
   onUploadImage,
@@ -286,6 +332,7 @@ function ExecutiveCouncilDrawer({
   uploadingImage: boolean;
   onClose: () => void;
   onChange: (field: keyof MemberDraft, value: string) => void;
+  onToggle: (field: "isActive", value: boolean) => void;
   onSave: () => void;
   onPickImage: () => void;
   onUploadImage: (file: File) => void;
@@ -311,6 +358,7 @@ function ExecutiveCouncilDrawer({
             draft={draft}
             errors={errors}
             onChange={onChange}
+            onToggle={onToggle}
             onPickImage={onPickImage}
             onUploadImage={onUploadImage}
             uploadingImage={uploadingImage}
@@ -410,10 +458,12 @@ function ExecutiveCouncilTable({
         <table className="executive-members-table">
           <thead>
             <tr>
-              <th>Photo</th>
+              <th>Logo</th>
               <th>Full Name</th>
               <th>Designation</th>
               <th>Company</th>
+              <th>Status</th>
+              <th>Order</th>
               <th>Created Date</th>
               <th>Actions</th>
             </tr>
@@ -421,13 +471,13 @@ function ExecutiveCouncilTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={8}>
                   <div className="executive-table-state">Loading members...</div>
                 </td>
               </tr>
             ) : members.length === 0 ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={8}>
                   <div className="executive-table-state">
                     <i className="fa fa-users"></i>
                     <span>No members found</span>
@@ -443,7 +493,7 @@ function ExecutiveCouncilTable({
                         {member.image ? (
                           <img src={addUrlToFile(member.image)} alt={member.name} />
                         ) : (
-                          <i className="fa fa-user"></i>
+                          <i className="fa fa-image"></i>
                         )}
                       </div>
                     </td>
@@ -452,6 +502,18 @@ function ExecutiveCouncilTable({
                     </td>
                     <td>{member.designation || "-"}</td>
                     <td>{member.company || "-"}</td>
+                    <td>
+                      <span
+                        className={
+                          member.isActive ?? true
+                            ? "executive-status-badge is-active"
+                            : "executive-status-badge"
+                        }
+                      >
+                        {member.isActive ?? true ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td>{member.sortOrder || index + 1}</td>
                     <td>{formatCreatedDate(createdDate)}</td>
                     <td>
                       <div className="executive-table-actions">
@@ -594,7 +656,9 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
     const query = memberSearch.trim().toLowerCase();
     if (!query) return values.councilSection.members;
     return values.councilSection.members.filter((member) =>
-      member.name.toLowerCase().includes(query),
+      [member.name, member.designation, member.company]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(query)),
     );
   }, [memberSearch, values.councilSection.members]);
 
@@ -607,7 +671,13 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
     const query = memberSearch.trim().toLowerCase();
     const indexes = values.councilSection.members
       .map((member, index) => ({ member, index }))
-      .filter(({ member }) => !query || member.name.toLowerCase().includes(query))
+      .filter(
+        ({ member }) =>
+          !query ||
+          [member.name, member.designation, member.company]
+            .filter(Boolean)
+            .some((value) => value.toLowerCase().includes(query)),
+      )
       .map(({ index }) => index);
     const start = (membersPage - 1) * rowsPerPage;
     return indexes.slice(start, start + rowsPerPage);
@@ -715,7 +785,10 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
   function openAddDrawer() {
     setDrawerMode("add");
     setEditingMemberIndex(null);
-    setMemberDraft(createEmptyExecutiveCouncilMember());
+    setMemberDraft({
+      ...createEmptyExecutiveCouncilMember(),
+      sortOrder: values.councilSection.members.length + 1,
+    });
     setMemberErrors({});
     setDrawerOpen(true);
   }
@@ -745,6 +818,8 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
       designation: memberDraft.designation.trim(),
       company: memberDraft.company.trim(),
       image: memberDraft.image,
+      sortOrder: Number(memberDraft.sortOrder) || values.councilSection.members.length + 1,
+      isActive: memberDraft.isActive,
     };
     const nextMembers =
       drawerMode === "edit" && editingMemberIndex !== null
@@ -950,19 +1025,65 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
 
             <section className="card about-page-card">
               <div className="card-body">
-                <SectionHeading eyebrow="Executive Council" title="Intro Text" />
+                <SectionHeading eyebrow="Executive Council" title="Leadership Section" />
+                <div className="row">
+                  <div className="form-group col-md-12">
+                    <label>Badge / Eyebrow Text</label>
+                    <input
+                      className="form-control"
+                      name="introSection.eyebrow"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      placeholder="The Leadership Behind IFMA"
+                      value={values.introSection.eyebrow}
+                    />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Title</label>
+                    <input
+                      className="form-control"
+                      name="introSection.title"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      placeholder="Experience. Expertise."
+                      value={values.introSection.title}
+                    />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Highlighted Title</label>
+                    <input
+                      className="form-control"
+                      name="introSection.highlightedTitle"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      placeholder="Collective Decision-Making."
+                      value={values.introSection.highlightedTitle}
+                    />
+                  </div>
+                </div>
                 <TextareaBox
-                  label="Intro Text"
-                  name="introSection.text"
+                  label="White Box Paragraphs"
+                  name="introSection.paragraphs"
                   handleBlur={handleBlur}
-                  handleChange={handleChange}
-                  placeholder="Intro paragraph"
-                  value={values.introSection.text}
-                  touched={getTouched("introSection.text")}
-                  error={getError("introSection.text")}
+                  handleChange={(event) => {
+                    const paragraphs = event.target.value
+                      .split(/\n+/)
+                      .map((paragraph) => paragraph.trim())
+                      .filter(Boolean);
+                    void setFieldValue("introSection.paragraphs", paragraphs);
+                    void setFieldValue("introSection.text", event.target.value);
+                  }}
+                  placeholder="Add each paragraph on a new line"
+                  value={
+                    values.introSection.paragraphs.length > 0
+                      ? values.introSection.paragraphs.join("\n\n")
+                      : values.introSection.text
+                  }
+                  touched={getTouched("introSection.paragraphs")}
+                  error={getError("introSection.paragraphs")}
                 />
                 <div className="mt-3">
-                  <label>Highlighted Text</label>
+                  <label>Quote / Highlight Line</label>
                   <input
                     className="form-control"
                     name="introSection.highlightText"
@@ -971,6 +1092,48 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
                     placeholder="We are indeed proud of the EC team."
                     value={values.introSection.highlightText}
                   />
+                </div>
+              </div>
+            </section>
+
+            <section className="card about-page-card">
+              <div className="card-body">
+                <SectionHeading eyebrow="Executive Council" title="Council Section" />
+                <div className="row">
+                  <div className="form-group col-md-6">
+                    <label>Heading</label>
+                    <input
+                      className="form-control"
+                      name="councilSection.heading"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      placeholder="Executive"
+                      value={values.councilSection.heading}
+                    />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Highlighted Heading</label>
+                    <input
+                      className="form-control"
+                      name="councilSection.highlightedHeading"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      placeholder="Council"
+                      value={values.councilSection.highlightedHeading}
+                    />
+                  </div>
+                  <div className="form-group col-md-12 mb-0">
+                    <TextareaBox
+                      label="Description"
+                      name="councilSection.description"
+                      handleBlur={handleBlur}
+                      handleChange={handleChange}
+                      placeholder="Senior industry leaders bringing diverse experience..."
+                      value={values.councilSection.description}
+                      touched={getTouched("councilSection.description")}
+                      error={getError("councilSection.description")}
+                    />
+                  </div>
                 </div>
               </div>
             </section>
@@ -1002,7 +1165,7 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
                         setMemberSearch(event.target.value);
                         setMembersPage(1);
                       }}
-                      placeholder="Search by member name"
+                      placeholder="Search name, designation, company"
                       type="search"
                       value={memberSearch}
                     />
@@ -1136,9 +1299,15 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
         errors={memberErrors}
         mode={drawerMode}
         onChange={(field, value) => {
-          setMemberDraft((oldDraft) => ({ ...oldDraft, [field]: value }));
+          setMemberDraft((oldDraft) => ({
+            ...oldDraft,
+            [field]: field === "sortOrder" ? Number(value) : value,
+          }));
           setMemberErrors((oldErrors) => ({ ...oldErrors, [field]: undefined }));
         }}
+        onToggle={(field, value) =>
+          setMemberDraft((oldDraft) => ({ ...oldDraft, [field]: value }))
+        }
         onClose={() => {
           if (!savingMember) setDrawerOpen(false);
         }}
