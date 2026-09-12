@@ -48,6 +48,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
   const [loading, setLoading] = useState<boolean>(false);
   const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [contentEditor, setContentEditor] = useState<any>(null);
 
   const {
     values,
@@ -324,6 +325,23 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
     };
   }
 
+  function applyImageLayout(layout: "block" | "alignLeft" | "alignRight" | "side") {
+    if (!contentEditor) {
+      toast.info("Editor is loading. Please try again.");
+      return;
+    }
+
+    const imageStyleCommand = contentEditor.commands.get("imageStyle");
+    if (!imageStyleCommand?.isEnabled) {
+      toast.info("Pehle editor me image par click karke select karein.");
+      return;
+    }
+
+    contentEditor.execute("imageStyle", { value: layout });
+    contentEditor.editing.view.focus();
+    setFieldValue("content", contentEditor.getData());
+  }
+
   return (
     <div className="content-wrapper post-form-page">
       <div className="post-form-header">
@@ -571,12 +589,58 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                 </div>
 
                 <div className="post-editor-shell" id="blog-editor">
+                    <div className="post-image-layout-panel">
+                      <div>
+                        <strong>Image Layout</strong>
+                        <span>Image select karke layout choose karein</span>
+                      </div>
+                      <div className="post-image-layout-actions">
+                        <button type="button" onClick={() => applyImageLayout("block")}>Full</button>
+                        <button type="button" onClick={() => applyImageLayout("alignLeft")}>Left</button>
+                        <button type="button" onClick={() => applyImageLayout("alignRight")}>Right</button>
+                        <button type="button" onClick={() => applyImageLayout("side")}>Text Wrap</button>
+                      </div>
+                    </div>
                     <CKEditor
                       editor={ClassicEditor as any}
                       config={{
                         extraPlugins: [uploadPlugin],
+                        image: {
+                          styles: {
+                            options: [
+                              "block",
+                              "side",
+                              {
+                                name: "alignLeft",
+                                title: "Left",
+                                icon: "left",
+                                className: "image-style-align-left",
+                                modelElements: ["imageBlock", "imageInline"],
+                              },
+                              {
+                                name: "alignRight",
+                                title: "Right",
+                                icon: "right",
+                                className: "image-style-align-right",
+                                modelElements: ["imageBlock", "imageInline"],
+                              },
+                            ],
+                          },
+                          toolbar: [
+                            "imageStyle:block",
+                            "imageStyle:alignLeft",
+                            "imageStyle:alignRight",
+                            "imageStyle:side",
+                            "|",
+                            "toggleImageCaption",
+                            "imageTextAlternative",
+                          ],
+                        },
                       }}
                       data={values?.content}
+                      onReady={(editor) => {
+                        setContentEditor(editor);
+                      }}
                       onChange={(__, editor) => {
                         const data = editor.getData();
                         setFieldValue("content", data);

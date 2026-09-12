@@ -7695,6 +7695,59 @@ ul.timeline>li:before {
   background: #ffffff;
 }
 
+.post-image-layout-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #d9e4f2;
+  background: #f3f7fe;
+}
+
+.post-image-layout-panel strong,
+.post-image-layout-panel span {
+  display: block;
+}
+
+.post-image-layout-panel strong {
+  color: #001b4d;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.post-image-layout-panel span {
+  margin-top: 2px;
+  color: #5e7191;
+  font-size: 11px;
+}
+
+.post-image-layout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.post-image-layout-actions button {
+  border: 1px solid #cbd8ea;
+  border-radius: 6px;
+  padding: 7px 11px;
+  color: #0b2c62;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.18s ease;
+}
+
+.post-image-layout-actions button:hover,
+.post-image-layout-actions button:focus {
+  border-color: #0b2c62;
+  color: #ffffff;
+  background: #0b2c62;
+}
+
 .post-editor-shell .ck.ck-toolbar {
   border: 0;
   border-bottom: 1px solid #d9e4f2;
@@ -7707,6 +7760,42 @@ ul.timeline>li:before {
   color: #001b4d;
   font-size: 0.96rem;
   line-height: 1.7;
+}
+
+.post-editor-shell .ck-content::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.post-editor-shell .ck-content figure.image {
+  max-width: 100%;
+}
+
+.post-editor-shell .ck-content figure.image img {
+  width: 100%;
+}
+
+.post-editor-shell .ck-content figure.image-style-align-left,
+.post-editor-shell .ck-content figure.image-style-align-right,
+.post-editor-shell .ck-content figure.image-style-side {
+  max-width: min(48%, 360px);
+}
+
+.post-editor-shell .ck-content figure.image-style-align-left {
+  float: left;
+  margin: 8px 24px 18px 0;
+}
+
+.post-editor-shell .ck-content figure.image-style-align-right,
+.post-editor-shell .ck-content figure.image-style-side {
+  float: right;
+  margin: 8px 0 18px 24px;
+}
+
+.post-editor-shell .ck-content figure.image-style-align-center {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .post-form-preview-card {
