@@ -84,6 +84,7 @@ export function EditCarousel() {
             apiData.mediaType || (apiData.video ? "VIDEO" : "IMAGE");
           apiData.image = apiData.image || "";
           apiData.video = apiData.video || "";
+          apiData.displayOrder = apiData.displayOrder || 1;
           setValues(apiData);
         } else {
           toast.error(apiResponse?.message);
@@ -485,6 +486,20 @@ export function EditCarousel() {
                       value={values.buttonLink}
                       touched={touched.buttonLink}
                       error={errors.buttonLink}
+                    />
+                  </div>
+
+                  <div className="form-group col-md-6">
+                    <InputBox
+                      label="Display Order"
+                      name="displayOrder"
+                      handleBlur={handleBlur}
+                      handleChange={handleChange}
+                      type="number"
+                      placeholder="1"
+                      value={values.displayOrder}
+                      touched={touched.displayOrder}
+                      error={errors.displayOrder}
                     />
                   </div>
 

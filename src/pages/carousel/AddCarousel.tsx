@@ -461,6 +461,20 @@ export function AddCarousel() {
                     />
                   </div>
 
+                  <div className="form-group col-md-6">
+                    <InputBox
+                      label="Display Order"
+                      name="displayOrder"
+                      handleBlur={handleBlur}
+                      handleChange={handleChange}
+                      type="number"
+                      placeholder="1"
+                      value={values.displayOrder}
+                      touched={touched.displayOrder}
+                      error={errors.displayOrder}
+                    />
+                  </div>
+
                   {/* <div className="form-group col-md-12">
                     <InputBox
                       label="Short Description"

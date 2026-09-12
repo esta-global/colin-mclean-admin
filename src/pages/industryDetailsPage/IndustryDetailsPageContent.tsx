@@ -7,8 +7,6 @@ import { API_URL } from "../../constants";
 import { get, post, put } from "../../utills";
 import { addUrlToFile } from "../../utills/addUrlToFile";
 import {
-  createEmptyIndustryHighlight,
-  createEmptyIndustryLink,
   IndustryDetailsPageValues,
   industryDetailsPageInitialValues,
   industryDetailsPageSchema,
@@ -95,6 +93,13 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
 
 const emptyIndustryContentItem = () => ({ eyebrow: "", title: "", description: "", value: "", label: "", year: "", footer: "" });
 
+const industrySectionLabels: Record<string, string> = {
+  snapshot: "Industry Snapshot",
+  journey: "Industry Journey Timeline",
+  ecosystem: "Three Industry Forces",
+  categories: "Fan Categories",
+};
+
 function IndustryContentSectionsEditor({
   sections,
   setFieldValue,
@@ -107,18 +112,19 @@ function IndustryContentSectionsEditor({
     <section className="card about-page-card">
       <div className="card-body">
         <div className="industry-editor-list__head">
-          <SectionHeading eyebrow="Industry Details" title="Content Sections" />
-          <button onClick={() => setFieldValue("contentSections", [...sections, { id: `section-${Date.now()}`, eyebrow: "", title: "", highlightedTitle: "", description: "", items: [] }])} type="button">+ Add Section</button>
+          <SectionHeading eyebrow="Industry Details" title="Page Content" />
         </div>
         {sections.map((section, sectionIndex) => (
           <div className="border rounded p-3 mb-4" key={`${section.id}-${sectionIndex}`}>
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <strong>Section {sectionIndex + 1}</strong>
-              <button className="btn btn-sm btn-outline-danger" onClick={() => setFieldValue("contentSections", sections.filter((_, index) => index !== sectionIndex))} type="button">Remove Section</button>
+              <strong>{industrySectionLabels[section.id] || `Section ${sectionIndex + 1}`}</strong>
             </div>
             <div className="row g-2 mb-3">
-              {([["id", "Section ID"], ["eyebrow", "Eyebrow"], ["title", "Main Heading"], ["highlightedTitle", "Highlighted Heading"]] as const).map(([field, label]) => (
-                <div className="col-md-3" key={field}><label className="form-label">{label}</label><input className="form-control" value={section[field]} onChange={(event) => update(`${sectionIndex}.${field}`, event.target.value)} /></div>
+              {(["eyebrow", "title", "highlightedTitle"] as const).map((field) => (
+                <div className="col-md-4" key={field}>
+                  <label className="form-label">{field === "eyebrow" ? "Section Eyebrow" : field === "title" ? "Main Heading" : "Highlighted Heading"}</label>
+                  <input className="form-control" value={section[field]} onChange={(event) => update(`${sectionIndex}.${field}`, event.target.value)} />
+                </div>
               ))}
             </div>
             <label className="form-label">Section Description</label>
@@ -126,14 +132,10 @@ function IndustryContentSectionsEditor({
             <div className="industry-editor-list__head"><strong>Section Items</strong><button onClick={() => update(`${sectionIndex}.items`, [...section.items, emptyIndustryContentItem()])} type="button">+ Add Item</button></div>
             {section.items.map((item, itemIndex) => (
               <div className="border rounded p-2 mb-2 bg-light" key={itemIndex}>
-                <div className="row g-2">
-                  <div className="col-md-3"><input className="form-control" placeholder="Item eyebrow / number" value={item.eyebrow} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.eyebrow`, event.target.value)} /></div>
-                  <div className="col-md-5"><input className="form-control" placeholder="Item title" value={item.title} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.title`, event.target.value)} /></div>
-                  <div className="col-md-3"><input className="form-control" placeholder="Year / value" value={item.year || item.value} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.${section.id === "snapshot" ? "value" : "year"}`, event.target.value)} /></div>
-                  <div className="col-md-1"><button className="btn btn-sm btn-outline-danger w-100" onClick={() => update(`${sectionIndex}.items`, section.items.filter((_, index) => index !== itemIndex))} type="button"><i className="fa fa-times"></i></button></div>
-                  <div className="col-md-6"><textarea className="form-control" rows={2} placeholder="Item description / stat label" value={item.description || item.label} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.${section.id === "snapshot" ? "label" : "description"}`, event.target.value)} /></div>
-                  <div className="col-md-6"><input className="form-control" placeholder="Footer / supporting text" value={item.footer} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.footer`, event.target.value)} /></div>
-                </div>
+                {section.id === "snapshot" ? <div className="row g-2"><div className="col-md-3"><input className="form-control" placeholder="Value, e.g. 1930s" value={item.value} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.value`, event.target.value)} /></div><div className="col-md-8"><textarea className="form-control" rows={2} placeholder="Supporting text" value={item.label} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.label`, event.target.value)} /></div><div className="col-md-1"><button aria-label="Remove snapshot card" className="btn btn-sm btn-outline-danger w-100" onClick={() => update(`${sectionIndex}.items`, section.items.filter((_, index) => index !== itemIndex))} type="button"><i className="fa fa-times"></i></button></div></div> : null}
+                {section.id === "journey" ? <div className="row g-2"><div className="col-md-3"><input className="form-control" placeholder="Timeline label" value={item.eyebrow} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.eyebrow`, event.target.value)} /></div><div className="col-md-5"><input className="form-control" placeholder="Milestone title" value={item.title} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.title`, event.target.value)} /></div><div className="col-md-3"><input className="form-control" placeholder="Year" value={item.year} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.year`, event.target.value)} /></div><div className="col-md-1"><button aria-label="Remove milestone" className="btn btn-sm btn-outline-danger w-100" onClick={() => update(`${sectionIndex}.items`, section.items.filter((_, index) => index !== itemIndex))} type="button"><i className="fa fa-times"></i></button></div><div className="col-12"><textarea className="form-control" rows={2} placeholder="Milestone description" value={item.description} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.description`, event.target.value)} /></div></div> : null}
+                {section.id === "ecosystem" ? <div className="row g-2"><div className="col-md-2"><input className="form-control" placeholder="Number" value={item.eyebrow} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.eyebrow`, event.target.value)} /></div><div className="col-md-5"><input className="form-control" placeholder="Card title" value={item.title} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.title`, event.target.value)} /></div><div className="col-md-4"><input className="form-control" placeholder="Footer text" value={item.footer} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.footer`, event.target.value)} /></div><div className="col-md-1"><button aria-label="Remove force" className="btn btn-sm btn-outline-danger w-100" onClick={() => update(`${sectionIndex}.items`, section.items.filter((_, index) => index !== itemIndex))} type="button"><i className="fa fa-times"></i></button></div><div className="col-12"><textarea className="form-control" rows={2} placeholder="Card description" value={item.description} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.description`, event.target.value)} /></div></div> : null}
+                {section.id === "categories" ? <div className="row g-2"><div className="col-md-11"><input className="form-control" placeholder="Category name" value={item.title} onChange={(event) => update(`${sectionIndex}.items.${itemIndex}.title`, event.target.value)} /></div><div className="col-md-1"><button aria-label="Remove category" className="btn btn-sm btn-outline-danger w-100" onClick={() => update(`${sectionIndex}.items`, section.items.filter((_, index) => index !== itemIndex))} type="button"><i className="fa fa-times"></i></button></div></div> : null}
               </div>
             ))}
           </div>
@@ -265,7 +267,7 @@ export function IndustryDetailsPageContent() {
             <span className="about-page-admin__eyebrow">Pages</span>
           </div>
           <h1>Industry Details Page</h1>
-          <p>Manage banner, industry content, highlight cards, quick links, and SEO.</p>
+          <p>Manage every visible banner, snapshot, timeline, force, category, and SEO text for this page.</p>
         </div>
       </div>
       {loading ? <OverlayLoading /> : null}
@@ -277,8 +279,14 @@ export function IndustryDetailsPageContent() {
                 <SectionHeading eyebrow="Industry Details" title="Banner Section" />
                 <div className="about-page-simple-grid">
                   <div className="about-page-field-grid">
-                    <input className="form-control" name="bannerSection.title" onBlur={handleBlur} onChange={handleChange} placeholder="Industry" value={values.bannerSection.title} />
-                    <input className="form-control" name="bannerSection.highlightedTitle" onBlur={handleBlur} onChange={handleChange} placeholder="Details" value={values.bannerSection.highlightedTitle} />
+                    <div>
+                      <label className="form-label">Banner Title</label>
+                      <input className="form-control" name="bannerSection.title" onBlur={handleBlur} onChange={handleChange} placeholder="Industry" value={values.bannerSection.title} />
+                    </div>
+                    <div>
+                      <label className="form-label">Highlighted Word</label>
+                      <input className="form-control" name="bannerSection.highlightedTitle" onBlur={handleBlur} onChange={handleChange} placeholder="Details" value={values.bannerSection.highlightedTitle} />
+                    </div>
                   </div>
                   <div className="about-page-image-field is-wide">
                     {values.bannerSection.image ? (
@@ -296,66 +304,6 @@ export function IndustryDetailsPageContent() {
             </section>
 
             <IndustryContentSectionsEditor sections={values.contentSections} setFieldValue={setFieldValue} />
-
-            <section className="card about-page-card">
-              <div className="card-body">
-                <SectionHeading eyebrow="Industry Details" title="Content Section" />
-                <input className="form-control mb-3" name="detailsSection.heading" onBlur={handleBlur} onChange={handleChange} placeholder="Industry Details" value={values.detailsSection.heading} />
-                <div className="industry-editor-list">
-                  <div className="industry-editor-list__head">
-                    <strong>Paragraphs</strong>
-                    <button onClick={() => setFieldValue("detailsSection.paragraphs", [...values.detailsSection.paragraphs, ""])} type="button">+ Add Paragraph</button>
-                  </div>
-                  {values.detailsSection.paragraphs.map((paragraph, index) => (
-                    <div className="industry-editor-row" key={index}>
-                      <textarea className="form-control" name={`detailsSection.paragraphs.${index}`} onBlur={handleBlur} onChange={handleChange} placeholder="Paragraph text" value={paragraph} />
-                      <button onClick={() => setFieldValue("detailsSection.paragraphs", values.detailsSection.paragraphs.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="card about-page-card">
-              <div className="card-body">
-                <div className="industry-editor-list__head">
-                  <SectionHeading eyebrow="Industry Details" title="Highlight Cards" />
-                  <button onClick={() => setFieldValue("detailsSection.highlights", [...values.detailsSection.highlights, createEmptyIndustryHighlight()])} type="button">+ Add Highlight</button>
-                </div>
-                <div className="industry-highlight-grid">
-                  {values.detailsSection.highlights.map((highlight, index) => (
-                    <div className="industry-highlight-card" key={index}>
-                      <button aria-label="Remove highlight" onClick={() => setFieldValue("detailsSection.highlights", values.detailsSection.highlights.filter((_, itemIndex) => itemIndex !== index))} type="button">
-                        <i className="fa fa-times"></i>
-                      </button>
-                      <textarea className="form-control" name={`detailsSection.highlights.${index}.text`} onBlur={handleBlur} onChange={handleChange} placeholder="Highlight text" value={highlight.text} />
-                      <select className="form-control" name={`detailsSection.highlights.${index}.position`} onBlur={handleBlur} onChange={handleChange} value={highlight.position}>
-                        <option value="left">Left</option>
-                        <option value="right">Right</option>
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="card about-page-card">
-              <div className="card-body">
-                <div className="industry-editor-list__head">
-                  <SectionHeading eyebrow="Industry Details" title="Bottom Links" />
-                  <button onClick={() => setFieldValue("detailsSection.links", [...values.detailsSection.links, createEmptyIndustryLink()])} type="button">+ Add Link</button>
-                </div>
-                <div className="industry-link-grid">
-                  {values.detailsSection.links.map((link, index) => (
-                    <div className="industry-link-card" key={index}>
-                      <input className="form-control" name={`detailsSection.links.${index}.label`} onBlur={handleBlur} onChange={handleChange} placeholder="Link label" value={link.label} />
-                      <input className="form-control" name={`detailsSection.links.${index}.url`} onBlur={handleBlur} onChange={handleChange} placeholder="URL" value={link.url} />
-                      <button onClick={() => setFieldValue("detailsSection.links", values.detailsSection.links.filter((_, itemIndex) => itemIndex !== index))} type="button"><i className="fa fa-times"></i></button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
 
             <section className="card about-page-card">
               <div className="card-body">

@@ -70,6 +70,7 @@ export function CarouselList() {
     file: any;
     mediaType: string;
     targetDevice: string;
+    displayOrder: number;
     createdAt: any;
     status: any;
     id: any;
@@ -135,6 +136,11 @@ export function CarouselList() {
       {
         Header: "TARGET DEVICE",
         accessor: "targetDevice",
+      },
+
+      {
+        Header: "DISPLAY ORDER",
+        accessor: "displayOrder",
       },
 
       // {
@@ -214,6 +220,7 @@ export function CarouselList() {
         },
         mediaType,
         targetDevice: data.targetDevice,
+        displayOrder: data.displayOrder || 1,
         createdAt: data.createdAt,
         status: data.status,
         id: data._id,
