@@ -112,46 +112,27 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
     setFieldValue("slug", slug);
   }
 
-  // handleUploadFile
-  async function handleUploadFile(
-    event: React.ChangeEvent<HTMLInputElement>,
+  async function uploadPostImageFile(
+    file: File,
     source?: "COVER_IMAGE" | "LISTING_IMAGE",
   ) {
     const mimeTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
 
-    const files = event.target.files;
-
-    if (!files || files.length === 0) {
-      if (source == "COVER_IMAGE") {
-        setFieldTouched("coverImage", true);
-        setFieldError("coverImage", "Image is required field");
-        toast.error("Image is required field");
-        return;
-      } else {
-        setFieldTouched("listingImage", true);
-        return;
-      }
-    }
-
-    // Validate MIME type and append valid files to FormData
-    // Check if the file's MIME type is in the allowed list
-    let file = files[0];
     if (!mimeTypes.includes(file.type)) {
       if (source == "COVER_IMAGE") {
         setFieldTouched("coverImage", true);
         setFieldError("coverImage", "Must select the valid coverImage file");
         toast.error("Must select the valid coverImage file");
         return;
-      } else {
-        setFieldTouched("listingImage", true);
-        setFieldError("listingImage", "Must select the valid coverImage file");
-        toast.error("Must select the valid coverImage file");
-        return;
       }
+
+      setFieldTouched("listingImage", true);
+      setFieldError("listingImage", "Must select the valid coverImage file");
+      toast.error("Must select the valid coverImage file");
+      return;
     }
 
     const formData = new FormData();
-
     formData.append("files", file);
 
     try {
@@ -173,19 +154,80 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
           setFieldError("listingImage", "");
           setFieldValue("listingImage", apiData.body[0].filename);
         }
+      } else if (source == "COVER_IMAGE") {
+        setFieldTouched("coverImage", false);
+        setFieldError("coverImage", apiData.message);
       } else {
-        if (source == "COVER_IMAGE") {
-          setFieldTouched("coverImage", false);
-          setFieldError("coverImage", apiData.message);
-        } else {
-          setFieldTouched("listingImage", false);
-          setFieldError("listingImage", apiData.message);
-        }
+        setFieldTouched("listingImage", false);
+        setFieldError("listingImage", apiData.message);
       }
     } catch (error: any) {
       toast.error(error?.message);
     }
   }
+
+  function getPastedImageFile(clipboardData?: DataTransfer | null) {
+    return Array.from(clipboardData?.files || []).find((file) =>
+      file.type.startsWith("image/"),
+    );
+  }
+
+  // handleUploadFile
+  async function handleUploadFile(
+    event: React.ChangeEvent<HTMLInputElement>,
+    source?: "COVER_IMAGE" | "LISTING_IMAGE",
+  ) {
+    const files = event.target.files;
+
+    if (!files || files.length === 0) {
+      if (source == "COVER_IMAGE") {
+        setFieldTouched("coverImage", true);
+        setFieldError("coverImage", "Image is required field");
+        toast.error("Image is required field");
+        return;
+      } else {
+        setFieldTouched("listingImage", true);
+        return;
+      }
+    }
+
+    await uploadPostImageFile(files[0], source);
+    event.target.value = "";
+  }
+
+  async function handlePasteCoverImage(
+    event: React.ClipboardEvent<HTMLElement>,
+  ) {
+    const pastedImage = getPastedImageFile(event.clipboardData);
+
+    if (!pastedImage) return;
+
+    event.preventDefault();
+    await uploadPostImageFile(pastedImage, "COVER_IMAGE");
+  }
+
+  useEffect(function () {
+    function handleWindowPaste(event: ClipboardEvent) {
+      if (event.defaultPrevented) return;
+
+      const target = event.target as HTMLElement | null;
+      const isTypingArea = target?.closest(
+        "input, textarea, .ck-editor, [contenteditable='true']",
+      );
+      const isCoverArea = target?.closest(".post-cover-grid");
+
+      if (isTypingArea && !isCoverArea) return;
+
+      const pastedImage = getPastedImageFile(event.clipboardData);
+      if (!pastedImage) return;
+
+      event.preventDefault();
+      void uploadPostImageFile(pastedImage, "COVER_IMAGE");
+    }
+
+    window.addEventListener("paste", handleWindowPaste);
+    return () => window.removeEventListener("paste", handleWindowPaste);
+  }, []);
 
   // get category
   useEffect(function () {
@@ -501,13 +543,13 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                   </div>
                   <span className="post-form-chip">1200 x 628 px</span>
                 </div>
-                <div className="post-cover-grid">
+                <div className="post-cover-grid" onPaste={handlePasteCoverImage} tabIndex={0}>
                   <label htmlFor="imageFile" className="post-cover-uploader">
                     <span className="post-cover-uploader__icon">
                       <i className="fa fa-cloud-arrow-up"></i>
                     </span>
                     <strong>Upload cover image</strong>
-                    <p>JPG, PNG, or WEBP landscape image.</p>
+                    <p>JPG, PNG, or WEBP landscape image. Paste image also works.</p>
                     <span className="post-cover-uploader__button">Choose file</span>
                       <input
                         type="file"
