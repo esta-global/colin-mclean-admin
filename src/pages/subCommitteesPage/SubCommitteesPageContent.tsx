@@ -25,6 +25,8 @@ type ApiBody = Partial<SubCommitteesPageValues> & {
 type MediaRecord = { _id?: string; filename: string };
 type DrawerMode = "add" | "edit";
 type FormErrors = Partial<Record<"committeeName" | "headName" | "headCompany", string>>;
+type SortField = "sortOrder" | "committeeName" | "headName" | "headCompany" | "members";
+type SortDirection = "asc" | "desc";
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -53,15 +55,59 @@ function stripApiFields(data: ApiBody): Partial<SubCommitteesPageValues> {
   return payload;
 }
 
+function getSortOrder(value: unknown) {
+  const order = Number(value);
+  return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
+}
+
 function normalizeValues(values: SubCommitteesPageValues): SubCommitteesPageValues {
   return {
     ...values,
+    introSection: {
+      ...values.introSection,
+      eyebrow: values.introSection.eyebrow.trim(),
+      title: values.introSection.title.trim(),
+      highlightedTitle: values.introSection.highlightedTitle.trim(),
+      text: values.introSection.text.trim(),
+      paragraphs: values.introSection.paragraphs
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean),
+      highlightText: values.introSection.highlightText.trim(),
+    },
     committeesSection: {
       ...values.committeesSection,
-      committees: values.committeesSection.committees.map((committee) => ({
-        ...committee,
-        teamMembers: committee.teamMembers.map((member) => member.trim()).filter(Boolean),
-      })),
+      eyebrow: values.committeesSection.eyebrow.trim(),
+      heading: values.committeesSection.heading.trim(),
+      highlightedHeading: values.committeesSection.highlightedHeading.trim(),
+      description: values.committeesSection.description.trim(),
+      committees: values.committeesSection.committees
+        .map((committee, index) => ({
+          committee: {
+            ...committee,
+            sortOrder: Number.isFinite(Number(committee.sortOrder))
+              ? Number(committee.sortOrder)
+              : index + 1,
+            teamMembers: committee.teamMembers.map((member) => member.trim()).filter(Boolean),
+          },
+          originalIndex: index,
+        }))
+        .sort((firstEntry, secondEntry) => {
+          const firstOrder = getSortOrder(firstEntry.committee.sortOrder);
+          const secondOrder = getSortOrder(secondEntry.committee.sortOrder);
+          return firstOrder - secondOrder || firstEntry.originalIndex - secondEntry.originalIndex;
+        })
+        .map(({ committee }) => committee),
+    },
+    ctaSection: {
+      ...values.ctaSection,
+      eyebrow: values.ctaSection.eyebrow.trim(),
+      title: values.ctaSection.title.trim(),
+      highlightedTitle: values.ctaSection.highlightedTitle.trim(),
+      description: values.ctaSection.description.trim(),
+      primaryButtonText: values.ctaSection.primaryButtonText.trim(),
+      primaryButtonUrl: values.ctaSection.primaryButtonUrl.trim(),
+      secondaryButtonText: values.ctaSection.secondaryButtonText.trim(),
+      secondaryButtonUrl: values.ctaSection.secondaryButtonUrl.trim(),
     },
     seo: {
       ...values.seo,
@@ -145,6 +191,17 @@ function CommitteeDrawer({
             {errors.headCompany ? <small>{errors.headCompany}</small> : null}
           </div>
           <div className="executive-form-field">
+            <label>Display Order</label>
+            <input
+              className="form-control"
+              min={0}
+              onChange={(event) => onChange("sortOrder", event.target.value)}
+              placeholder="1"
+              type="number"
+              value={draft.sortOrder}
+            />
+          </div>
+          <div className="executive-form-field">
             <label>Team Members</label>
             <textarea
               className="form-control"
@@ -199,20 +256,26 @@ function CommitteesTable({
   page,
   rowsPerPage,
   totalCommittees,
+  sortField,
+  sortDirection,
   onEdit,
   onDelete,
   onPageChange,
   onRowsPerPageChange,
+  onSort,
 }: {
   committees: SubCommittee[];
   loading: boolean;
   page: number;
   rowsPerPage: number;
   totalCommittees: number;
+  sortField: SortField;
+  sortDirection: SortDirection;
   onEdit: (visibleIndex: number) => void;
   onDelete: (visibleIndex: number) => void;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (value: number) => void;
+  onSort: (field: SortField) => void;
 }) {
   const totalPages = Math.max(1, Math.ceil(totalCommittees / rowsPerPage));
   const start = totalCommittees === 0 ? 0 : (page - 1) * rowsPerPage + 1;
@@ -226,6 +289,21 @@ function CommitteesTable({
     items.push(pageNumber);
     return items;
   }, []);
+  const sortIcon = (field: SortField) => {
+    if (sortField !== field) return "fa fa-sort";
+    return sortDirection === "asc" ? "fa fa-sort-up" : "fa fa-sort-down";
+  };
+  const SortButton = ({ field, label }: { field: SortField; label: string }) => (
+    <button
+      aria-label={`Sort by ${label}`}
+      className="executive-table-sort-button"
+      onClick={() => onSort(field)}
+      type="button"
+    >
+      <span>{label}</span>
+      <i className={sortIcon(field)}></i>
+    </button>
+  );
 
   return (
     <div className="executive-table-card">
@@ -234,18 +312,19 @@ function CommitteesTable({
           <thead>
             <tr>
               <th>Photo</th>
-              <th>Committee</th>
-              <th>Head</th>
-              <th>Company / Role</th>
-              <th>Members</th>
+              <th><SortButton field="committeeName" label="Committee" /></th>
+              <th><SortButton field="headName" label="Head" /></th>
+              <th><SortButton field="headCompany" label="Company / Role" /></th>
+              <th><SortButton field="members" label="Members" /></th>
+              <th><SortButton field="sortOrder" label="Order" /></th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6}><div className="executive-table-state">Loading committees...</div></td></tr>
+              <tr><td colSpan={7}><div className="executive-table-state">Loading committees...</div></td></tr>
             ) : committees.length === 0 ? (
-              <tr><td colSpan={6}><div className="executive-table-state"><i className="fa fa-users"></i><span>No committees found</span></div></td></tr>
+              <tr><td colSpan={7}><div className="executive-table-state"><i className="fa fa-users"></i><span>No committees found</span></div></td></tr>
             ) : committees.map((committee, index) => (
               <tr key={`${committee.committeeName}-${index}`}>
                 <td><div className="executive-table-avatar">{committee.image ? <img src={addUrlToFile(committee.image)} alt={committee.headName} /> : <i className="fa fa-user"></i>}</div></td>
@@ -253,6 +332,7 @@ function CommitteesTable({
                 <td>{committee.headName || "-"}</td>
                 <td>{committee.headCompany || "-"}</td>
                 <td>{committee.teamMembers.length}</td>
+                <td>{Number.isFinite(Number(committee.sortOrder)) ? committee.sortOrder : index + 1}</td>
                 <td>
                   <div className="executive-table-actions">
                     <button aria-label="Edit committee" title="Edit" onClick={() => onEdit(index)} type="button"><i className="fa fa-pencil"></i></button>
@@ -303,6 +383,8 @@ export function SubCommitteesPageContent() {
   const [committeeSearch, setCommitteeSearch] = useState("");
   const [committeesPage, setCommitteesPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(7);
+  const [sortField, setSortField] = useState<SortField>("sortOrder");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [committeeToDelete, setCommitteeToDelete] = useState<{ index: number; data: SubCommittee } | null>(null);
   const [deletingCommittee, setDeletingCommittee] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, limit: 60, totalRecords: 0, totalPages: 0 });
@@ -325,26 +407,63 @@ export function SubCommitteesPageContent() {
   });
 
   const keywordsString = useMemo(() => values.seo.keywords.filter((keyword) => keyword.trim()).join(", "), [values.seo.keywords]);
-  const filteredCommittees = useMemo(() => {
+  const filteredCommitteeEntries = useMemo(() => {
     const query = committeeSearch.trim().toLowerCase();
-    if (!query) return values.committeesSection.committees;
-    return values.committeesSection.committees.filter((committee) =>
-      committee.committeeName.toLowerCase().includes(query) || committee.headName.toLowerCase().includes(query),
-    );
-  }, [committeeSearch, values.committeesSection.committees]);
+    return values.committeesSection.committees
+      .map((committee, index) => ({ committee, index }))
+      .filter(
+        ({ committee }) =>
+          !query ||
+          committee.committeeName.toLowerCase().includes(query) ||
+          committee.headName.toLowerCase().includes(query) ||
+          committee.headCompany.toLowerCase().includes(query),
+      )
+      .sort((firstEntry, secondEntry) => {
+        const firstCommittee = firstEntry.committee;
+        const secondCommittee = secondEntry.committee;
+        const direction = sortDirection === "asc" ? 1 : -1;
+
+        if (sortField === "members") {
+          return (firstCommittee.teamMembers.length - secondCommittee.teamMembers.length) * direction;
+        }
+
+        if (sortField === "sortOrder") {
+          const firstOrder = getSortOrder(firstCommittee.sortOrder);
+          const secondOrder = getSortOrder(secondCommittee.sortOrder);
+          const orderComparison = (firstOrder - secondOrder) * direction;
+          return orderComparison || firstEntry.index - secondEntry.index;
+        }
+
+        const firstValue =
+          sortField === "committeeName"
+            ? firstCommittee.committeeName
+            : sortField === "headName"
+              ? firstCommittee.headName
+              : firstCommittee.headCompany;
+        const secondValue =
+          sortField === "committeeName"
+            ? secondCommittee.committeeName
+            : sortField === "headName"
+              ? secondCommittee.headName
+              : secondCommittee.headCompany;
+
+        return firstValue.localeCompare(secondValue) * direction;
+      });
+  }, [committeeSearch, sortDirection, sortField, values.committeesSection.committees]);
+  const filteredCommittees = useMemo(
+    () => filteredCommitteeEntries.map(({ committee }) => committee),
+    [filteredCommitteeEntries],
+  );
   const visibleCommittees = useMemo(() => {
     const start = (committeesPage - 1) * rowsPerPage;
     return filteredCommittees.slice(start, start + rowsPerPage);
   }, [committeesPage, filteredCommittees, rowsPerPage]);
   const visibleOriginalIndexes = useMemo(() => {
-    const query = committeeSearch.trim().toLowerCase();
-    const indexes = values.committeesSection.committees
-      .map((committee, index) => ({ committee, index }))
-      .filter(({ committee }) => !query || committee.committeeName.toLowerCase().includes(query) || committee.headName.toLowerCase().includes(query))
-      .map(({ index }) => index);
     const start = (committeesPage - 1) * rowsPerPage;
-    return indexes.slice(start, start + rowsPerPage);
-  }, [committeeSearch, committeesPage, rowsPerPage, values.committeesSection.committees]);
+    return filteredCommitteeEntries
+      .map(({ index }) => index)
+      .slice(start, start + rowsPerPage);
+  }, [committeesPage, filteredCommitteeEntries, rowsPerPage]);
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(filteredCommittees.length / rowsPerPage));
@@ -400,6 +519,16 @@ export function SubCommitteesPageContent() {
     return Boolean(getIn(touched, name));
   }
 
+  function handleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection((currentDirection) => (currentDirection === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+    setCommitteesPage(1);
+  }
+
   function handleSelectImage(img: MediaRecord) {
     if (!selectedFileFor) return;
     if (selectedFileFor === "draft.image") {
@@ -435,7 +564,10 @@ export function SubCommitteesPageContent() {
   function openAddDrawer() {
     setDrawerMode("add");
     setEditingIndex(null);
-    setDraft(createEmptySubCommittee());
+    setDraft({
+      ...createEmptySubCommittee(),
+      sortOrder: values.committeesSection.committees.length + 1,
+    });
     setFormErrors({});
     setDrawerOpen(true);
   }
@@ -464,6 +596,9 @@ export function SubCommitteesPageContent() {
       headName: draft.headName.trim(),
       headCompany: draft.headCompany.trim(),
       image: draft.image,
+      sortOrder: Number.isFinite(Number(draft.sortOrder))
+        ? Number(draft.sortOrder)
+        : values.committeesSection.committees.length + 1,
       teamMembers: draft.teamMembers.map((member) => member.trim()).filter(Boolean),
     };
     const nextCommittees = drawerMode === "edit" && editingIndex !== null
@@ -539,19 +674,71 @@ export function SubCommitteesPageContent() {
             </section>
             <section className="card about-page-card">
               <div className="card-body">
-                <SectionHeading eyebrow="Sub Committees" title="Intro Text" />
-                <TextareaBox label="Intro Text" name="introSection.text" handleBlur={handleBlur} handleChange={handleChange} placeholder="Intro paragraph" value={values.introSection.text} touched={getTouched("introSection.text")} error={getError("introSection.text")} />
+                <SectionHeading eyebrow="Sub Committees" title="Working Together Section" />
+                <div className="row">
+                  <div className="form-group col-md-12">
+                    <label>Badge / Eyebrow Text</label>
+                    <input className="form-control" name="introSection.eyebrow" onBlur={handleBlur} onChange={handleChange} placeholder="Working Together" value={values.introSection.eyebrow} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Title</label>
+                    <input className="form-control" name="introSection.title" onBlur={handleBlur} onChange={handleChange} placeholder="Expertise That Moves." value={values.introSection.title} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Highlighted Title</label>
+                    <input className="form-control" name="introSection.highlightedTitle" onBlur={handleBlur} onChange={handleChange} placeholder="The Industry Forward." value={values.introSection.highlightedTitle} />
+                  </div>
+                </div>
+                <TextareaBox
+                  label="White Box Paragraphs"
+                  name="introSection.paragraphs"
+                  handleBlur={handleBlur}
+                  handleChange={(event) => {
+                    const paragraphs = event.target.value
+                      .split(/\n+/)
+                      .map((paragraph) => paragraph.trim())
+                      .filter(Boolean);
+                    void setFieldValue("introSection.paragraphs", paragraphs);
+                    void setFieldValue("introSection.text", event.target.value);
+                  }}
+                  placeholder="Add each paragraph on a new line"
+                  value={values.introSection.paragraphs.length > 0 ? values.introSection.paragraphs.join("\n\n") : values.introSection.text}
+                  touched={getTouched("introSection.paragraphs")}
+                  error={getError("introSection.paragraphs")}
+                />
                 <div className="mt-3">
-                  <label>Highlighted Text</label>
+                  <label>Quote / Highlight Line</label>
                   <input className="form-control" name="introSection.highlightText" onBlur={handleBlur} onChange={handleChange} placeholder="Highlighted text" value={values.introSection.highlightText} />
+                </div>
+              </div>
+            </section>
+            <section className="card about-page-card">
+              <div className="card-body">
+                <SectionHeading eyebrow="Sub Committees" title="Committees Section" />
+                <div className="row">
+                  <div className="form-group col-md-12">
+                    <label>Badge / Eyebrow Text</label>
+                    <input className="form-control" name="committeesSection.eyebrow" onBlur={handleBlur} onChange={handleChange} placeholder="Our Committees" value={values.committeesSection.eyebrow} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Title</label>
+                    <input className="form-control" name="committeesSection.heading" onBlur={handleBlur} onChange={handleChange} placeholder="Collective Expertise." value={values.committeesSection.heading} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Highlighted Title</label>
+                    <input className="form-control" name="committeesSection.highlightedHeading" onBlur={handleBlur} onChange={handleChange} placeholder="Shared Responsibility." value={values.committeesSection.highlightedHeading} />
+                  </div>
+                  <div className="form-group col-md-12 mb-0">
+                    <TextareaBox label="Description" name="committeesSection.description" handleBlur={handleBlur} handleChange={handleChange} placeholder="Across government affairs..." value={values.committeesSection.description} touched={getTouched("committeesSection.description")} error={getError("committeesSection.description")} />
+                  </div>
                 </div>
               </div>
             </section>
             <section className="executive-members-panel">
               <div className="executive-members-header">
                 <div>
-                  <span>Sub Committees</span>
-                  <input aria-label="Committees section heading" className="executive-members-title-input" name="committeesSection.heading" onBlur={handleBlur} onChange={handleChange} placeholder="Sub Committees" value={values.committeesSection.heading} />
+                  <span>Committee Records</span>
+                  <h2 className="executive-members-title-input">Manage Sub Committees</h2>
                 </div>
                 <div className="executive-members-toolbar">
                   <div className="executive-members-search">
@@ -572,10 +759,51 @@ export function SubCommitteesPageContent() {
                 onEdit={(visibleIndex) => openEditDrawer(originalIndexFromVisible(visibleIndex))}
                 onPageChange={setCommitteesPage}
                 onRowsPerPageChange={(value) => { setRowsPerPage(value); setCommitteesPage(1); }}
+                onSort={handleSort}
                 page={committeesPage}
                 rowsPerPage={rowsPerPage}
+                sortDirection={sortDirection}
+                sortField={sortField}
                 totalCommittees={filteredCommittees.length}
               />
+            </section>
+            <section className="card about-page-card">
+              <div className="card-body">
+                <SectionHeading eyebrow="Get Involved" title="CTA Section" />
+                <div className="row">
+                  <div className="form-group col-md-12">
+                    <label>Badge / Eyebrow Text</label>
+                    <input className="form-control" name="ctaSection.eyebrow" onBlur={handleBlur} onChange={handleChange} placeholder="Get Involved" value={values.ctaSection.eyebrow} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Title</label>
+                    <input className="form-control" name="ctaSection.title" onBlur={handleBlur} onChange={handleChange} placeholder="Want to Contribute" value={values.ctaSection.title} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Highlighted Title</label>
+                    <input className="form-control" name="ctaSection.highlightedTitle" onBlur={handleBlur} onChange={handleChange} placeholder="to the Industry?" value={values.ctaSection.highlightedTitle} />
+                  </div>
+                  <div className="form-group col-md-12">
+                    <TextareaBox label="Description" name="ctaSection.description" handleBlur={handleBlur} handleChange={handleChange} placeholder="Explore membership..." value={values.ctaSection.description} touched={getTouched("ctaSection.description")} error={getError("ctaSection.description")} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Primary Button Text</label>
+                    <input className="form-control" name="ctaSection.primaryButtonText" onBlur={handleBlur} onChange={handleChange} placeholder="Become a Member" value={values.ctaSection.primaryButtonText} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Primary Button URL</label>
+                    <input className="form-control" name="ctaSection.primaryButtonUrl" onBlur={handleBlur} onChange={handleChange} placeholder="https://..." value={values.ctaSection.primaryButtonUrl} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Secondary Button Text</label>
+                    <input className="form-control" name="ctaSection.secondaryButtonText" onBlur={handleBlur} onChange={handleChange} placeholder="Explore Members" value={values.ctaSection.secondaryButtonText} />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Secondary Button URL</label>
+                    <input className="form-control" name="ctaSection.secondaryButtonUrl" onBlur={handleBlur} onChange={handleChange} placeholder="https://..." value={values.ctaSection.secondaryButtonUrl} />
+                  </div>
+                </div>
+              </div>
             </section>
             <section className="card about-page-card">
               <div className="card-body">
@@ -605,7 +833,13 @@ export function SubCommitteesPageContent() {
         draft={draft}
         errors={formErrors}
         mode={drawerMode}
-        onChange={(field, value) => { setDraft((old) => ({ ...old, [field]: value })); setFormErrors((old) => ({ ...old, [field]: undefined })); }}
+        onChange={(field, value) => {
+          setDraft((old) => ({
+            ...old,
+            [field]: field === "sortOrder" ? Number(value) : value,
+          }));
+          setFormErrors((old) => ({ ...old, [field]: undefined }));
+        }}
         onClose={() => { if (!savingCommittee) setDrawerOpen(false); }}
         onPickImage={() => setSelectedFileFor("draft.image")}
         onSave={saveCommittee}

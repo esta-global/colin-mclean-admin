@@ -7695,6 +7695,59 @@ ul.timeline>li:before {
   background: #ffffff;
 }
 
+.post-image-layout-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #d9e4f2;
+  background: #f3f7fe;
+}
+
+.post-image-layout-panel strong,
+.post-image-layout-panel span {
+  display: block;
+}
+
+.post-image-layout-panel strong {
+  color: #001b4d;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.post-image-layout-panel span {
+  margin-top: 2px;
+  color: #5e7191;
+  font-size: 11px;
+}
+
+.post-image-layout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.post-image-layout-actions button {
+  border: 1px solid #cbd8ea;
+  border-radius: 6px;
+  padding: 7px 11px;
+  color: #0b2c62;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.18s ease;
+}
+
+.post-image-layout-actions button:hover,
+.post-image-layout-actions button:focus {
+  border-color: #0b2c62;
+  color: #ffffff;
+  background: #0b2c62;
+}
+
 .post-editor-shell .ck.ck-toolbar {
   border: 0;
   border-bottom: 1px solid #d9e4f2;
@@ -7707,6 +7760,42 @@ ul.timeline>li:before {
   color: #001b4d;
   font-size: 0.96rem;
   line-height: 1.7;
+}
+
+.post-editor-shell .ck-content::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.post-editor-shell .ck-content figure.image {
+  max-width: 100%;
+}
+
+.post-editor-shell .ck-content figure.image img {
+  width: 100%;
+}
+
+.post-editor-shell .ck-content figure.image-style-align-left,
+.post-editor-shell .ck-content figure.image-style-align-right,
+.post-editor-shell .ck-content figure.image-style-side {
+  max-width: min(48%, 360px);
+}
+
+.post-editor-shell .ck-content figure.image-style-align-left {
+  float: left;
+  margin: 8px 24px 18px 0;
+}
+
+.post-editor-shell .ck-content figure.image-style-align-right,
+.post-editor-shell .ck-content figure.image-style-side {
+  float: right;
+  margin: 8px 0 18px 24px;
+}
+
+.post-editor-shell .ck-content figure.image-style-align-center {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .post-form-preview-card {
@@ -13559,7 +13648,7 @@ ul.timeline>li:before {
 
 .executive-members-table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1080px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -13576,6 +13665,32 @@ ul.timeline>li:before {
   font-weight: 950;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.executive-table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  width: 100%;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  text-transform: inherit;
+}
+
+.executive-table-sort-button i {
+  color: #8aa0bd;
+  font-size: 0.72rem;
+}
+
+.executive-table-sort-button:hover,
+.executive-table-sort-button:focus {
+  color: #005bd8;
+  outline: 0;
 }
 
 .executive-members-table td {
@@ -13648,6 +13763,26 @@ ul.timeline>li:before {
   border: 1px solid #ffd1d1;
   color: #dc2626;
   background: #ffffff;
+}
+
+.executive-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 0.62rem;
+  border: 1px solid #ffd1d1;
+  border-radius: 999px;
+  color: #dc2626;
+  background: #fff8f8;
+  font-size: 0.72rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.executive-status-badge.is-active {
+  border-color: #a9efd5;
+  color: #047857;
+  background: #ecfdf5;
 }
 
 .executive-table-state {
@@ -14241,11 +14376,39 @@ ul.timeline>li:before {
   display: none;
 }
 
+.executive-member-field-grid,
 .executive-member-disabled-fields {
   display: grid;
   gap: 0.65rem;
+}
+
+.executive-member-field-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.executive-member-disabled-fields {
   padding-top: 0.4rem;
   border-top: 1px solid #edf2f8;
+}
+
+.executive-member-switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  width: 100%;
+  border: 1px solid #ffd1d1;
+  border-radius: 8px;
+  color: #dc2626;
+  background: #fff8f8;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.executive-member-switch button.is-active {
+  border-color: #a9efd5;
+  color: #047857;
+  background: #ecfdf5;
 }
 
 .executive-delete-modal-shell {

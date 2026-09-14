@@ -23,6 +23,10 @@ export const carouselSchema = Yup.object({
   shortDescription: Yup.string().label("Short Description"),
   buttonText: Yup.string().label("Button Text"),
   buttonLink: Yup.string().label("Button Link"),
+  displayOrder: Yup.number()
+    .min(1, "Display Order must be at least 1")
+    .integer("Display Order must be a whole number")
+    .label("Display Order"),
   status: Yup.string().label("Status"),
 });
 
@@ -36,6 +40,7 @@ export const carouselInitialValues: CarouselValues = {
   shortDescription: "",
   buttonText: "",
   buttonLink: "",
+  displayOrder: 1,
   status: "true",
 };
 
@@ -49,5 +54,6 @@ export interface CarouselValues {
   shortDescription: string;
   buttonText: string;
   buttonLink: string;
+  displayOrder: number;
   status: string;
 }

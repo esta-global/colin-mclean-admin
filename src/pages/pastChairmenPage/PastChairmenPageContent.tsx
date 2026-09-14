@@ -69,6 +69,21 @@ function stripApiFields(data: PastChairmenPageApiBody): Partial<PastChairmenPage
 function normalizePastChairmenValues(values: PastChairmenPageValues): PastChairmenPageValues {
   return {
     ...values,
+    introSection: {
+      ...values.introSection,
+      eyebrow: values.introSection.eyebrow.trim(),
+      title: values.introSection.title.trim(),
+      highlightedTitle: values.introSection.highlightedTitle.trim(),
+      text: values.introSection.text.trim(),
+      paragraphs: values.introSection.paragraphs
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean),
+      highlightText: values.introSection.highlightText.trim(),
+    },
+    chairmenSection: {
+      ...values.chairmenSection,
+      heading: values.chairmenSection.heading.trim(),
+    },
     seo: {
       ...values.seo,
       keywords: values.seo.keywords.filter((keyword) => keyword.trim()),
@@ -743,19 +758,65 @@ export function PastChairmenPageContent() {
 
             <section className="card about-page-card">
               <div className="card-body">
-                <SectionHeading eyebrow="Past Chairmen" title="Intro Text" />
+                <SectionHeading eyebrow="Past Chairmen" title="Leadership Section" />
+                <div className="row">
+                  <div className="form-group col-md-12">
+                    <label>Badge / Eyebrow Text</label>
+                    <input
+                      className="form-control"
+                      name="introSection.eyebrow"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      placeholder="Leadership Through The Years"
+                      value={values.introSection.eyebrow}
+                    />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Title</label>
+                    <input
+                      className="form-control"
+                      name="introSection.title"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      placeholder="Illustrious. Industrious."
+                      value={values.introSection.title}
+                    />
+                  </div>
+                  <div className="form-group col-md-6">
+                    <label>Highlighted Title</label>
+                    <input
+                      className="form-control"
+                      name="introSection.highlightedTitle"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      placeholder="Always Forward-Looking."
+                      value={values.introSection.highlightedTitle}
+                    />
+                  </div>
+                </div>
                 <TextareaBox
-                  label="Intro Text"
-                  name="introSection.text"
+                  label="White Box Paragraphs"
+                  name="introSection.paragraphs"
                   handleBlur={handleBlur}
-                  handleChange={handleChange}
-                  placeholder="Intro paragraph"
-                  value={values.introSection.text}
-                  touched={getTouched("introSection.text")}
-                  error={getError("introSection.text")}
+                  handleChange={(event) => {
+                    const paragraphs = event.target.value
+                      .split(/\n+/)
+                      .map((paragraph) => paragraph.trim())
+                      .filter(Boolean);
+                    void setFieldValue("introSection.paragraphs", paragraphs);
+                    void setFieldValue("introSection.text", event.target.value);
+                  }}
+                  placeholder="Add each paragraph on a new line"
+                  value={
+                    values.introSection.paragraphs.length > 0
+                      ? values.introSection.paragraphs.join("\n\n")
+                      : values.introSection.text
+                  }
+                  touched={getTouched("introSection.paragraphs")}
+                  error={getError("introSection.paragraphs")}
                 />
                 <div className="mt-3">
-                  <label>Highlighted Text</label>
+                  <label>Quote / Highlight Line</label>
                   <input
                     className="form-control"
                     name="introSection.highlightText"
@@ -771,7 +832,7 @@ export function PastChairmenPageContent() {
             <section className="executive-members-panel">
               <div className="executive-members-header">
                 <div>
-                  <span>Past Chairmen</span>
+                  <span>Past Chairmen Section</span>
                   <input
                     aria-label="Chairmen section heading"
                     className="executive-members-title-input"
