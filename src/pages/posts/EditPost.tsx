@@ -49,6 +49,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
   const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
   const [contentEditor, setContentEditor] = useState<any>(null);
+  const [isEditorExpanded, setIsEditorExpanded] = useState(false);
 
   const {
     values,
@@ -325,7 +326,9 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
     };
   }
 
-  function applyImageLayout(layout: "block" | "alignLeft" | "alignRight" | "side") {
+  function applyImageLayout(
+    layout: "block" | "alignLeft" | "alignRight" | "side" | "half" | "third",
+  ) {
     if (!contentEditor) {
       toast.info("Editor is loading. Please try again.");
       return;
@@ -341,6 +344,14 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
     contentEditor.editing.view.focus();
     setFieldValue("content", contentEditor.getData());
   }
+
+  useEffect(
+    function () {
+      document.body.classList.toggle("post-editor-expanded-open", isEditorExpanded);
+      return () => document.body.classList.remove("post-editor-expanded-open");
+    },
+    [isEditorExpanded],
+  );
 
   return (
     <div className="content-wrapper post-form-page">
@@ -588,17 +599,34 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                   </div>
                 </div>
 
-                <div className="post-editor-shell" id="blog-editor">
+                <div
+                  className={
+                    isEditorExpanded
+                      ? "post-editor-shell post-editor-shell--expanded"
+                      : "post-editor-shell"
+                  }
+                  id="blog-editor"
+                >
                     <div className="post-image-layout-panel">
                       <div>
                         <strong>Image Layout</strong>
-                        <span>Image select karke layout choose karein</span>
+                        <span>Select images, then use 50% for two columns or 33% for three columns.</span>
                       </div>
                       <div className="post-image-layout-actions">
                         <button type="button" onClick={() => applyImageLayout("block")}>Full</button>
                         <button type="button" onClick={() => applyImageLayout("alignLeft")}>Left</button>
                         <button type="button" onClick={() => applyImageLayout("alignRight")}>Right</button>
                         <button type="button" onClick={() => applyImageLayout("side")}>Text Wrap</button>
+                        <button type="button" onClick={() => applyImageLayout("half")}>50%</button>
+                        <button type="button" onClick={() => applyImageLayout("third")}>33%</button>
+                        <button
+                          className="post-editor-expand-button"
+                          type="button"
+                          onClick={() => setIsEditorExpanded((expanded) => !expanded)}
+                        >
+                          <i className={isEditorExpanded ? "fa fa-compress" : "fa fa-expand"}></i>
+                          {isEditorExpanded ? "Close" : "Expand"}
+                        </button>
                       </div>
                     </div>
                     <CKEditor
@@ -624,6 +652,20 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                                 className: "image-style-align-right",
                                 modelElements: ["imageBlock", "imageInline"],
                               },
+                              {
+                                name: "half",
+                                title: "50%",
+                                icon: "left",
+                                className: "image-style-half",
+                                modelElements: ["imageBlock", "imageInline"],
+                              },
+                              {
+                                name: "third",
+                                title: "33%",
+                                icon: "right",
+                                className: "image-style-third",
+                                modelElements: ["imageBlock", "imageInline"],
+                              },
                             ],
                           },
                           toolbar: [
@@ -631,6 +673,8 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                             "imageStyle:alignLeft",
                             "imageStyle:alignRight",
                             "imageStyle:side",
+                            "imageStyle:half",
+                            "imageStyle:third",
                             "|",
                             "toggleImageCaption",
                             "imageTextAlternative",
