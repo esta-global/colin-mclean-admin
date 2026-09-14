@@ -1,12 +1,29 @@
 import * as Yup from "yup";
 
 export type ContentType = "blog" | "trivia";
+export type BlogSectionType = "heading" | "text" | "fullImage" | "imageGrid";
+
+export interface BlogSectionImage {
+  image: string;
+  title: string;
+}
+
+export interface BlogSection {
+  id: string;
+  type: BlogSectionType;
+  heading: string;
+  text: string;
+  image: string;
+  imageTitle: string;
+  columns: "2" | "3";
+  images: BlogSectionImage[];
+}
 
 export const postSchema = Yup.object({
   type: Yup.string().oneOf(["blog", "trivia"]).required().label("Type"),
   title: Yup.string().required().label("Title"),
   slug: Yup.string().required().label("Slug"),
-  content: Yup.string().required().label("Content"),
+  content: Yup.string().label("Content"),
   excerpt: Yup.string().label("Excerpt"),
   coverImage: Yup.string().required().label("Cover Image"),
 
@@ -28,6 +45,8 @@ export const postInitialValues: PostValues = {
   title: "",
   slug: "",
   content: "",
+  schemaData: "",
+  blogSections: [],
   excerpt: "",
   coverImage: "",
 
@@ -48,6 +67,8 @@ export interface PostValues {
   title: string;
   slug: string;
   content: string;
+  schemaData: string;
+  blogSections: BlogSection[];
   excerpt: string;
   coverImage: string;
 

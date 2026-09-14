@@ -12,6 +12,7 @@ import {
   PostValues,
   postInitialValues,
   ContentType,
+  BlogSection,
 } from "../../validationSchemas/postSchema";
 
 import { useEffect, useState } from "react";
@@ -81,9 +82,16 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
       helpers: FormikHelpers<PostValues>,
     ) {
       setLoading(true);
+      const { blogSections, ...payloadValues } = values;
 
       const newValue = {
-        ...values,
+        ...payloadValues,
+        content: blogSections.length
+          ? sectionsToHtml(blogSections)
+          : normalizeImageLayoutHtml(values.content),
+        schemaData: blogSections.length
+          ? JSON.stringify({ blogSections })
+          : values.schemaData || "",
         category: values.category?.value,
         author: values.author?.value,
       };
@@ -102,6 +110,136 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
     initialValues: { ...postInitialValues, type: defaultType },
     validationSchema: postSchema,
   });
+
+  function normalizeImageLayoutHtml(content: string) {
+    if (!content || typeof DOMParser === "undefined") return content;
+
+    const layoutClasses = [
+      "image-style-align-left",
+      "image-style-align-right",
+      "image-style-side",
+      "image-style-half",
+      "image-style-third",
+    ];
+    const doc = new DOMParser().parseFromString(content, "text/html");
+
+    doc.querySelectorAll("figure.image, img").forEach((element) => {
+      const hasLayoutClass = layoutClasses.some((className) =>
+        element.classList.contains(className),
+      );
+      if (!hasLayoutClass) return;
+
+      element.removeAttribute("style");
+      element.removeAttribute("width");
+      element.removeAttribute("height");
+      element.querySelectorAll?.("img").forEach((image) => {
+        image.removeAttribute("style");
+        image.removeAttribute("width");
+        image.removeAttribute("height");
+      });
+    });
+
+    return doc.body.innerHTML;
+  }
+
+  function createBlogSection(type: BlogSection["type"]): BlogSection {
+    return {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      type,
+      heading: "",
+      text: "",
+      image: "",
+      imageTitle: "",
+      columns: type === "imageGrid" ? "2" : "2",
+      images: type === "imageGrid"
+        ? [
+            { image: "", title: "" },
+            { image: "", title: "" },
+          ]
+        : [],
+    };
+  }
+
+  function updateBlogSection(index: number, patch: Partial<BlogSection>) {
+    setFieldValue(
+      "blogSections",
+      values.blogSections.map((section, sectionIndex) =>
+        sectionIndex === index ? { ...section, ...patch } : section,
+      ),
+    );
+  }
+
+  function updateSectionImage(sectionIndex: number, imageIndex: number, patch: { image?: string; title?: string }) {
+    const nextSections = values.blogSections.map((section, index) => {
+      if (index !== sectionIndex) return section;
+      const images = section.images.map((image, itemIndex) =>
+        itemIndex === imageIndex ? { ...image, ...patch } : image,
+      );
+      return { ...section, images };
+    });
+    setFieldValue("blogSections", nextSections);
+  }
+
+  function addBlogSection(type: BlogSection["type"]) {
+    setFieldValue("blogSections", [...values.blogSections, createBlogSection(type)]);
+  }
+
+  function addImageGridSection(columns: "2" | "3") {
+    const section = createBlogSection("imageGrid");
+    const count = Number(columns);
+    setFieldValue("blogSections", [
+      ...values.blogSections,
+      {
+        ...section,
+        columns,
+        images: Array.from({ length: count }, () => ({ image: "", title: "" })),
+      },
+    ]);
+  }
+
+  function removeBlogSection(index: number) {
+    setFieldValue(
+      "blogSections",
+      values.blogSections.filter((_, sectionIndex) => sectionIndex !== index),
+    );
+  }
+
+  function moveBlogSection(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= values.blogSections.length) return;
+    const nextSections = [...values.blogSections];
+    [nextSections[index], nextSections[nextIndex]] = [nextSections[nextIndex], nextSections[index]];
+    setFieldValue("blogSections", nextSections);
+  }
+
+  function syncGridColumns(sectionIndex: number, columns: "2" | "3") {
+    const count = Number(columns);
+    const section = values.blogSections[sectionIndex];
+    const images = [...section.images];
+    while (images.length < count) images.push({ image: "", title: "" });
+    updateBlogSection(sectionIndex, { columns, images: images.slice(0, count) });
+  }
+
+  function sectionsToHtml(sections: BlogSection[]) {
+    return sections
+      .map((section) => {
+        if (section.type === "heading") return section.heading ? `<h2>${section.heading}</h2>` : "";
+        if (section.type === "text") return section.text || "";
+        if (section.type === "fullImage" && section.image) {
+          return `<figure><img src="${addUrlToFile(section.image)}" alt="${section.imageTitle || ""}" />${section.imageTitle ? `<figcaption>${section.imageTitle}</figcaption>` : ""}</figure>`;
+        }
+        if (section.type === "imageGrid") {
+          const items = section.images
+            .filter((item) => item.image)
+            .map((item) => `<figure><img src="${addUrlToFile(item.image)}" alt="${item.title || ""}" />${item.title ? `<figcaption>${item.title}</figcaption>` : ""}</figure>`)
+            .join("");
+          return items ? `<div>${items}</div>` : "";
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join("");
+  }
 
   function handleTitleChange(evt: React.ChangeEvent<HTMLInputElement>) {
     let value = validateTextNumber(evt.target.value);
@@ -127,9 +265,11 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
         return;
       }
 
-      setFieldTouched("listingImage", true);
-      setFieldError("listingImage", "Must select the valid coverImage file");
-      toast.error("Must select the valid coverImage file");
+      if (source == "LISTING_IMAGE") {
+        setFieldTouched("listingImage", true);
+        setFieldError("listingImage", "Must select the valid coverImage file");
+      }
+      toast.error("Must select the valid image file");
       return;
     }
 
@@ -146,15 +286,17 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
       const apiData = await apiResponse.json();
 
       if (apiData.status == 200) {
+        const filename = apiData.body[0].filename;
         if (source == "COVER_IMAGE") {
           setFieldTouched("coverImage", false);
           setFieldError("coverImage", "");
-          setFieldValue("coverImage", apiData.body[0].filename);
-        } else {
+          setFieldValue("coverImage", filename);
+        } else if (source == "LISTING_IMAGE") {
           setFieldTouched("listingImage", false);
           setFieldError("listingImage", "");
-          setFieldValue("listingImage", apiData.body[0].filename);
+          setFieldValue("listingImage", filename);
         }
+        return filename as string;
       } else if (source == "COVER_IMAGE") {
         setFieldTouched("coverImage", false);
         setFieldError("coverImage", apiData.message);
@@ -350,6 +492,7 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
 
   function applyImageLayout(
     layout: "block" | "alignLeft" | "alignRight" | "side" | "half" | "third",
+    withCaption = false,
   ) {
     if (!contentEditor) {
       toast.info("Editor is loading. Please try again.");
@@ -363,6 +506,10 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
     }
 
     contentEditor.execute("imageStyle", { value: layout });
+    const captionCommand = contentEditor.commands.get("toggleImageCaption");
+    if (withCaption && captionCommand?.isEnabled && !captionCommand.value) {
+      contentEditor.execute("toggleImageCaption");
+    }
     contentEditor.editing.view.focus();
     setFieldValue("content", contentEditor.getData());
   }
@@ -549,12 +696,164 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
               <div className="card-body">
                 <div className="post-form-section-heading">
                   <div>
+                    <span>Structured content</span>
+                    <h2>Blog sections</h2>
+                  </div>
+                </div>
+                <div className="blog-section-builder">
+                  <div className="blog-section-builder__actions">
+                    <button type="button" onClick={() => addBlogSection("heading")}>Add Heading</button>
+                    <button type="button" onClick={() => addBlogSection("text")}>Add Rich Text</button>
+                    <button type="button" onClick={() => addBlogSection("fullImage")}>Add Full Image</button>
+                    <button type="button" onClick={() => addImageGridSection("2")}>Add 2 Images</button>
+                    <button type="button" onClick={() => addImageGridSection("3")}>Add 3 Images</button>
+                  </div>
+
+                  {values.blogSections.length ? (
+                    values.blogSections.map((section, sectionIndex) => (
+                      <div className="blog-section-card" key={section.id}>
+                        <div className="blog-section-card__head">
+                          <strong>{sectionIndex + 1}. {section.type}</strong>
+                          <div>
+                            <button type="button" onClick={() => moveBlogSection(sectionIndex, -1)}>Up</button>
+                            <button type="button" onClick={() => moveBlogSection(sectionIndex, 1)}>Down</button>
+                            <button type="button" onClick={() => removeBlogSection(sectionIndex)}>Remove</button>
+                          </div>
+                        </div>
+
+                        {section.type === "heading" ? (
+                          <input
+                            className="form-control"
+                            onChange={(event) => updateBlogSection(sectionIndex, { heading: event.target.value })}
+                            placeholder="Section heading"
+                            value={section.heading}
+                          />
+                        ) : null}
+
+                        {section.type === "text" ? (
+                          <div className="blog-section-rich-text">
+                            <CKEditor
+                              editor={ClassicEditor as any}
+                              config={{ extraPlugins: [uploadPlugin] }}
+                              data={section.text}
+                              onChange={(__, editor) => {
+                                updateBlogSection(sectionIndex, { text: editor.getData() });
+                              }}
+                              id={`blog-section-text-${section.id}`}
+                            />
+                          </div>
+                        ) : null}
+
+                        {section.type === "text" ? (
+                          <small className="blog-section-help">Use this as many times as needed for paragraphs, bullets, links, and inline formatting.</small>
+                        ) : null}
+
+                        {section.type === "fullImage" ? (
+                          <div
+                            className="blog-section-image-row"
+                            onPaste={async (event) => {
+                              const pastedImage = getPastedImageFile(event.clipboardData);
+                              if (!pastedImage) return;
+                              event.preventDefault();
+                              const filename = await uploadPostImageFile(pastedImage);
+                              if (filename) updateBlogSection(sectionIndex, { image: filename });
+                            }}
+                          >
+                            <label>
+                              <span>Image</span>
+                              <input
+                                accept="image/jpeg,image/png,image/webp"
+                                className="form-control"
+                                onChange={async (event) => {
+                                  const file = event.target.files?.[0];
+                                  if (!file) return;
+                                  const filename = await uploadPostImageFile(file);
+                                  if (filename) updateBlogSection(sectionIndex, { image: filename });
+                                  event.target.value = "";
+                                }}
+                                type="file"
+                              />
+                            </label>
+                            {section.image ? <img src={addUrlToFile(section.image)} alt="" /> : null}
+                            <input
+                              className="form-control"
+                              onChange={(event) => updateBlogSection(sectionIndex, { imageTitle: event.target.value })}
+                              placeholder="Image title/caption"
+                              value={section.imageTitle}
+                            />
+                          </div>
+                        ) : null}
+
+                        {section.type === "imageGrid" ? (
+                          <div className={`blog-section-grid-editor is-${section.columns === "3" ? "three" : "two"}`}>
+                            <select
+                              className="form-control"
+                              onChange={(event) => syncGridColumns(sectionIndex, event.target.value as "2" | "3")}
+                              value={section.columns}
+                            >
+                              <option value="2">2 images</option>
+                              <option value="3">3 images</option>
+                            </select>
+                            <div className="blog-section-grid-editor__items">
+                              {section.images.map((item, imageIndex) => (
+                                <div
+                                  className="blog-section-grid-editor__item"
+                                  key={`${section.id}-${imageIndex}`}
+                                  onPaste={async (event) => {
+                                    const pastedImage = getPastedImageFile(event.clipboardData);
+                                    if (!pastedImage) return;
+                                    event.preventDefault();
+                                    const filename = await uploadPostImageFile(pastedImage);
+                                    if (filename) updateSectionImage(sectionIndex, imageIndex, { image: filename });
+                                  }}
+                                >
+                                  {item.image ? <img src={addUrlToFile(item.image)} alt="" /> : <span>No image</span>}
+                                  <input
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="form-control"
+                                    onChange={async (event) => {
+                                      const file = event.target.files?.[0];
+                                      if (!file) return;
+                                      const filename = await uploadPostImageFile(file);
+                                      if (filename) updateSectionImage(sectionIndex, imageIndex, { image: filename });
+                                      event.target.value = "";
+                                    }}
+                                    type="file"
+                                  />
+                                  <input
+                                    className="form-control"
+                                    onChange={(event) => updateSectionImage(sectionIndex, imageIndex, { title: event.target.value })}
+                                    placeholder="Image title"
+                                    value={item.title}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="blog-section-empty">Add sections here for stable frontend layout. Rich text above remains as fallback.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="card post-form-card">
+              <div className="card-body">
+                <div className="post-form-section-heading">
+                  <div>
                     <span>Media</span>
                     <h2>Cover image</h2>
                   </div>
                   <span className="post-form-chip">1200 x 628 px</span>
                 </div>
-                <div className="post-cover-grid" onPaste={handlePasteCoverImage} tabIndex={0}>
+                <div
+                  className={values.coverImage ? "post-cover-grid has-cover-image" : "post-cover-grid"}
+                  onPaste={handlePasteCoverImage}
+                  tabIndex={0}
+                >
                   <label htmlFor="imageFile" className="post-cover-uploader">
                     <span className="post-cover-uploader__icon">
                       <i className="fa fa-cloud-arrow-up"></i>
@@ -641,6 +940,8 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                         <button type="button" onClick={() => applyImageLayout("side")}>Text Wrap</button>
                         <button type="button" onClick={() => applyImageLayout("half")}>50%</button>
                         <button type="button" onClick={() => applyImageLayout("third")}>33%</button>
+                        <button type="button" onClick={() => applyImageLayout("half", true)}>2 Img + Text</button>
+                        <button type="button" onClick={() => applyImageLayout("third", true)}>3 Img + Text</button>
                         <button
                           className="post-editor-expand-button"
                           type="button"
