@@ -1,21 +1,31 @@
-import { GoBackButton, InputBox, SubmitButton } from "../../components";
+import { GoBackButton, InputBox, Pagination, SubmitButton } from "../../components";
 import { FormikHelpers, useFormik } from "formik";
 import {
   authorSchema,
   AuthorValues,
   authorInitialValues,
 } from "../../validationSchemas/authorSchema";
-import { useState } from "react";
-import { post, remove } from "../../utills";
+import { useEffect, useState } from "react";
+import { get, post } from "../../utills";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../../constants";
 import { addUrlToFile } from "../../utills/addUrlToFile";
 
+type MediaRecord = { _id?: string; filename: string };
+
 export function AddAuthor() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
   const [uploadingPhoto, setUploadingPhoto] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [records, setRecords] = useState<MediaRecord[]>([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 36,
+    totalRecords: 0,
+    totalPages: 0,
+  });
 
   const {
     values,
@@ -49,79 +59,109 @@ export function AddAuthor() {
     validationSchema: authorSchema,
   });
 
+  useEffect(
+    function () {
+      async function fetchMedia() {
+        let url = `/media?page=${pagination.page}&limit=${pagination.limit}`;
+        if (searchQuery) url += `&searchQuery=${searchQuery}`;
+
+        const apiResponse = await get(url, true);
+
+        if (apiResponse?.status == 200) {
+          setRecords(apiResponse.body || []);
+          setPagination((oldPagination) => ({
+            ...oldPagination,
+            page: apiResponse?.page as number,
+            totalPages: apiResponse?.totalPages as number,
+            totalRecords: apiResponse?.totalRecords as number,
+          }));
+        } else {
+          setRecords([]);
+        }
+      }
+
+      fetchMedia();
+    },
+    [pagination.page, pagination.limit, searchQuery]
+  );
+
   async function handleUploadFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const uploaded = await uploadFiles(Array.from(event.target.files || []));
+    if (uploaded[0]?.filename) setFieldValue("profilePhoto", uploaded[0].filename);
+    event.target.value = "";
+  }
+
+  async function uploadFiles(files: File[]) {
     const mimeTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
-    const files = event.target.files;
 
-    if (!files || files.length === 0) {
-      setFieldTouched("profilePhoto", true);
-      setFieldError("profilePhoto", "Profile Photo is required field");
-      toast.error("Profile Photo is required field");
-      return;
-    }
-
-    const file = files[0];
-    if (!mimeTypes.includes(file.type)) {
-      setFieldTouched("profilePhoto", true);
-      setFieldError("profilePhoto", "Must select the valid Profile Photo file");
-      toast.error("Must select the valid Profile Photo file");
-      return;
-    }
+    if (!files.length) return [];
 
     const formData = new FormData();
-    formData.append("files", file);
+    files.forEach((file) => {
+      if (!mimeTypes.includes(file.type)) {
+        toast.error("Only JPG, PNG, and WEBP images are allowed.");
+        return;
+      }
+      formData.append("files", file);
+    });
+
+    if (!formData.has("files")) return [];
 
     try {
       setUploadingPhoto(true);
-      const apiResponse = await fetch(`${API_URL}/fileUploads`, {
+      const token = localStorage.getItem("token");
+      const apiResponse = await fetch(`${API_URL}/media`, {
         method: "POST",
         body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       const apiData = await apiResponse.json();
 
       if (apiData.status == 200) {
         setFieldTouched("profilePhoto", false);
         setFieldError("profilePhoto", "");
-        setFieldValue("profilePhoto", apiData.body[0].filename);
-        toast.success("Profile photo uploaded");
-      } else {
-        toast.error(apiData?.message || "Failed to upload profile photo");
+        setRecords((oldRecords) => [...apiData.body, ...oldRecords]);
+        toast.success(apiData.message || "Image uploaded successfully");
+        return apiData.body as MediaRecord[];
       }
+
+      toast.error(apiData?.message || "Failed to upload image");
+      return [];
     } catch (error: any) {
       toast.error(error?.message);
+      return [];
     } finally {
       setUploadingPhoto(false);
     }
   }
 
-  async function handleDeleteFile(
-    event: React.MouseEvent<HTMLButtonElement>,
-    fileName: string
-  ) {
+  async function handlePasteImage(event: React.ClipboardEvent<HTMLButtonElement>) {
+    const pastedImages = Array.from(event.clipboardData.files).filter((file) =>
+      file.type.startsWith("image/")
+    );
+    if (!pastedImages.length) return;
+
     event.preventDefault();
+    const uploaded = await uploadFiles(pastedImages.slice(0, 1));
+    if (uploaded[0]?.filename) setFieldValue("profilePhoto", uploaded[0].filename);
+  }
 
-    try {
-      const apiResponse = await remove(`/fileUploads/${fileName}`);
-      if (apiResponse?.status == 200) {
-        setFieldError("profilePhoto", "");
-        setFieldValue("profilePhoto", "");
-        toast.success("Profile photo removed");
-      }
+  function handleSelectImage(img: MediaRecord) {
+    setFieldTouched("profilePhoto", false);
+    setFieldError("profilePhoto", "");
+    setFieldValue("profilePhoto", img.filename);
+  }
 
-      const fileInput = document.getElementById(
-        "imageFile"
-      ) as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = "";
-        setFieldValue("profilePhoto", "");
-      }
-    } catch (error: any) {
-      toast.error(error?.message);
-    }
+  function handleDeleteFile(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    setFieldError("profilePhoto", "");
+    setFieldValue("profilePhoto", "");
   }
 
   return (
-    <div className="content-wrapper author-form-page">
+    <div className="content-wrapper author-form-page" onPaste={handlePasteImage}>
       <div className="author-form-header">
         <div className="author-form-header__content">
           <div className="author-form-header__actions">
@@ -177,7 +217,6 @@ export function AddAuthor() {
                       type="email"
                       placeholder="Enter email"
                       value={values.email}
-                      required={true}
                       touched={touched.email}
                       error={errors.email}
                     />
@@ -192,7 +231,6 @@ export function AddAuthor() {
                       type="text"
                       placeholder="Enter mobile"
                       value={values.mobile}
-                      required={true}
                       touched={touched.mobile}
                       error={errors.mobile}
                     />
@@ -260,23 +298,18 @@ export function AddAuthor() {
           </main>
 
           <aside className="author-form-side">
-            <input
-              type="file"
-              className="d-none"
-              id="imageFile"
-              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-              onChange={handleUploadFile}
-              disabled={uploadingPhoto}
-            />
             <div className="card author-form-card author-form-preview-card">
               <div className="card-body">
                 <span className="author-form-side-kicker">Preview</span>
                 <div className="author-form-preview-photo-wrap">
                   <button
-                    aria-label="Upload profile photo"
+                    aria-label="Select profile photo"
                     className="author-form-preview-photo author-form-preview-photo--action"
+                    data-bs-target="#selectAuthorPhotoModal"
+                    data-bs-toggle="modal"
                     disabled={uploadingPhoto}
-                    onClick={() => document.getElementById("imageFile")?.click()}
+                    onClick={() => setFieldTouched("profilePhoto", true)}
+                    onPaste={handlePasteImage}
                     type="button"
                   >
                     {values.profilePhoto ? (
@@ -285,7 +318,7 @@ export function AddAuthor() {
                       <i className="fa fa-user"></i>
                     )}
                     <span className="author-photo-action-hint">
-                      <i className={uploadingPhoto ? "fa fa-spinner fa-spin" : "fa fa-camera"}></i>
+                      <i className={uploadingPhoto ? "fa fa-spinner fa-spin" : "fa fa-images"}></i>
                     </span>
                   </button>
                   {values.profilePhoto ? (
@@ -294,10 +327,10 @@ export function AddAuthor() {
                       className="author-photo-remove"
                       aria-label="Remove profile photo"
                       onClick={(evt) => {
-                        handleDeleteFile(evt, values.profilePhoto);
+                        handleDeleteFile(evt);
                       }}
                     >
-                      <i className="fa fa-trash"></i>
+                      <i className="fa fa-times"></i>
                     </button>
                   ) : null}
                 </div>
@@ -339,6 +372,76 @@ export function AddAuthor() {
           </aside>
         </div>
       </form>
+
+      <div
+        className="modal fade"
+        id="selectAuthorPhotoModal"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false"
+        tabIndex={-1}
+        aria-labelledby="selectAuthorPhotoModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-xl">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5 me-2" id="selectAuthorPhotoModalLabel">
+                Select Profile Photo
+              </h1>
+              <input
+                accept="image/jpeg,image/png,image/webp"
+                disabled={uploadingPhoto}
+                onChange={handleUploadFile}
+                type="file"
+              />
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="about-page-media-toolbar">
+                <input
+                  className="form-control"
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search media"
+                  type="search"
+                  value={searchQuery}
+                />
+              </div>
+              <div className="row mb-2 gy-2 media-list-section">
+                {records.map((item) => (
+                  <div className="col-md-2 col-4" key={item._id || item.filename}>
+                    <button
+                      className="about-page-media-card"
+                      data-bs-dismiss="modal"
+                      onClick={() => handleSelectImage(item)}
+                      type="button"
+                    >
+                      <img src={addUrlToFile(item.filename)} alt="" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="px-3">
+              <Pagination
+                pagination={pagination}
+                setPagination={setPagination}
+                tableName="table-to-xls"
+                csvFileName="images"
+              />
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary px-3 py-2" data-bs-dismiss="modal">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
