@@ -636,8 +636,8 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                       </div>
                       <div className="post-image-layout-actions">
                         <button type="button" onClick={() => applyImageLayout("block")}>Full</button>
-                        <button type="button" onClick={() => applyImageLayout("alignLeft")}>Left</button>
-                        <button type="button" onClick={() => applyImageLayout("alignRight")}>Right</button>
+                        <button type="button" onClick={() => applyImageLayout("alignLeft")}>Image Left + Text</button>
+                        <button type="button" onClick={() => applyImageLayout("alignRight")}>Image Right + Text</button>
                         <button type="button" onClick={() => applyImageLayout("side")}>Text Wrap</button>
                         <button type="button" onClick={() => applyImageLayout("half")}>50%</button>
                         <button type="button" onClick={() => applyImageLayout("third")}>33%</button>
