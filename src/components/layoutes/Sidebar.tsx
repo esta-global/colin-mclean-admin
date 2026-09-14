@@ -771,6 +771,11 @@ export function Sidebar() {
                   Contact Inquiries
                 </Link>
               </li>
+              <li className="nav-item">
+                <Link className={`nav-link ${handleActiveLink("/associate-membership-applications")}`} to="/associate-membership-applications">
+                  Associate Membership Applications
+                </Link>
+              </li>
               {/* <li className="nav-item">
                 <Link
                   className={`nav-link ${handleActiveLink("/newsletters")}`}

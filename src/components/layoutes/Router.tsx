@@ -297,6 +297,8 @@ export function Router() {
         path="/admin/contact-inquiries/details/:id"
         element={<Pages.ContactInquiryDetails />}
       />
+      <Route path="/associate-membership-applications" element={<Pages.AssociateMembershipApplicationList />} />
+      <Route path="/associate-membership-applications/details/:id" element={<Pages.AssociateMembershipApplicationDetails />} />
       <Route
         path="/admin/contact-inquiries/edit/:id"
         element={<Pages.EditContactInquiry />}

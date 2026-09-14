@@ -59,6 +59,8 @@ export * from "./videosPage/VideosPageContent";
 export * from "./contactInquiries/ContactInquiryList";
 export * from "./contactInquiries/ContactInquiryDetails";
 export * from "./contactInquiries/EditContactInquiry";
+export * from "./associateMembershipApplications/AssociateMembershipApplicationList";
+export * from "./associateMembershipApplications/AssociateMembershipApplicationDetails";
 
 // FaQs Categories
 export * from "./faqsCategory/AddFaqCategory";
