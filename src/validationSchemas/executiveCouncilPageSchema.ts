@@ -4,6 +4,7 @@ export interface ExecutiveCouncilMember {
   name: string;
   designation: string;
   company: string;
+  profileImage?: string;
   image: string;
   sortOrder: number;
   isActive: boolean;
@@ -42,6 +43,7 @@ export const createEmptyExecutiveCouncilMember = (): ExecutiveCouncilMember => (
   name: "",
   designation: "",
   company: "",
+  profileImage: "",
   image: "",
   sortOrder: 0,
   isActive: true,
@@ -70,6 +72,7 @@ export const executiveCouncilPageSchema = Yup.object({
         name: stringField(),
         designation: stringField(),
         company: stringField(),
+        profileImage: stringField(),
         image: stringField(),
         sortOrder: Yup.number().min(0),
         isActive: Yup.boolean(),
@@ -147,3 +150,4 @@ export const executiveCouncilPageInitialValues: ExecutiveCouncilPageValues = {
     keywords: [],
   },
 };
+

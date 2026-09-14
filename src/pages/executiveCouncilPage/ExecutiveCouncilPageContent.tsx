@@ -105,6 +105,7 @@ function normalizeExecutiveCouncilValues(
           name: member.name.trim(),
           designation: member.designation.trim(),
           company: member.company.trim(),
+          profileImage: member.profileImage || "",
           image: member.image || "",
           sortOrder: Number.isFinite(Number(member.sortOrder))
             ? Number(member.sortOrder)
@@ -160,65 +161,59 @@ export function ExecutiveCouncilMembersContent() {
   return <ExecutiveCouncilAdminContent view="members" />;
 }
 
-function AvatarUpload({
-  member,
+function ImageUploadCard({
+  alt,
+  description,
+  iconClassName,
+  image,
+  previewClassName,
+  title,
   onChange,
   onPickFromLibrary,
-  onUpload,
-  uploading,
 }: {
-  member: MemberDraft;
+  alt: string;
+  description: string;
+  iconClassName: string;
+  image?: string;
+  previewClassName: string;
+  title: string;
   onChange: (image: string) => void;
   onPickFromLibrary: () => void;
-  onUpload: (file: File) => void;
-  uploading: boolean;
 }) {
   return (
     <div className="executive-member-avatar-upload">
-      <button
-        className="executive-member-avatar"
-        data-bs-target="#selectExecutiveCouncilImageFileModal"
-        data-bs-toggle="modal"
-        onClick={onPickFromLibrary}
-        type="button"
-      >
-        {member.image ? (
-          <img src={addUrlToFile(member.image)} alt={member.company || member.name || "Company logo"} />
-        ) : (
-          <i className="fa fa-image"></i>
-        )}
-      </button>
-      <div>
-        <strong>Company Logo</strong>
-        <span>Upload or select the logo shown on the card</span>
-        <div className="executive-member-avatar-actions">
-          <label>
-            Upload
-            <input
-              accept="image/jpeg,image/png,image/webp"
-              disabled={uploading}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) onUpload(file);
-                event.target.value = "";
-              }}
-              type="file"
-            />
-          </label>
+      <div className="executive-member-image-control">
+        <button
+          className={`executive-member-image-tile ${previewClassName}`}
+          data-bs-target="#selectExecutiveCouncilImageFileModal"
+          data-bs-toggle="modal"
+          onClick={onPickFromLibrary}
+          title="Choose from library"
+          type="button"
+        >
+          {image ? (
+            <img src={addUrlToFile(image)} alt={alt} />
+          ) : (
+            <span>
+              <i className={iconClassName}></i>
+              <em>Upload</em>
+            </span>
+          )}
+        </button>
+        {image ? (
           <button
-            data-bs-target="#selectExecutiveCouncilImageFileModal"
-            data-bs-toggle="modal"
-            onClick={onPickFromLibrary}
+            aria-label={`Clear ${title}`}
+            className="executive-member-image-clear"
+            onClick={() => onChange("")}
             type="button"
           >
-            Library
+            <i className="fa fa-times"></i>
           </button>
-          {member.image ? (
-            <button onClick={() => onChange("")} type="button">
-              Clear
-            </button>
-          ) : null}
-        </div>
+        ) : null}
+      </div>
+      <div>
+        <strong>{title}</strong>
+        <span>{description}</span>
       </div>
     </div>
   );
@@ -230,25 +225,34 @@ function ExecutiveCouncilForm({
   onChange,
   onToggle,
   onPickImage,
-  onUploadImage,
-  uploadingImage,
 }: {
   draft: MemberDraft;
   errors: MemberFormErrors;
   onChange: (field: keyof MemberDraft, value: string) => void;
   onToggle: (field: "isActive", value: boolean) => void;
-  onPickImage: () => void;
-  onUploadImage: (file: File) => void;
-  uploadingImage: boolean;
+  onPickImage: (field: "memberDraft.profileImage" | "memberDraft.image") => void;
 }) {
   return (
     <div className="executive-member-form">
-      <AvatarUpload
-        member={draft}
+      <ImageUploadCard
+        alt={draft.name || "Executive council member"}
+        description="Upload or select the member image"
+        iconClassName="fa fa-user"
+        image={draft.profileImage}
+        onChange={(image) => onChange("profileImage", image)}
+        onPickFromLibrary={() => onPickImage("memberDraft.profileImage")}
+        previewClassName="executive-member-photo-preview"
+        title="Executive Council Image"
+      />
+      <ImageUploadCard
+        alt={draft.company || draft.name || "Company logo"}
+        description="Upload or select the logo shown on the card"
+        iconClassName="fa fa-image"
+        image={draft.image}
         onChange={(image) => onChange("image", image)}
-        onPickFromLibrary={onPickImage}
-        onUpload={onUploadImage}
-        uploading={uploadingImage}
+        onPickFromLibrary={() => onPickImage("memberDraft.image")}
+        previewClassName="executive-member-logo-preview"
+        title="Company Logo"
       />
       <label>
         <span>Full Name</span>
@@ -316,26 +320,22 @@ function ExecutiveCouncilDrawer({
   draft,
   errors,
   saving,
-  uploadingImage,
   onClose,
   onChange,
   onToggle,
   onSave,
   onPickImage,
-  onUploadImage,
 }: {
   open: boolean;
   mode: DrawerMode;
   draft: MemberDraft;
   errors: MemberFormErrors;
   saving: boolean;
-  uploadingImage: boolean;
   onClose: () => void;
   onChange: (field: keyof MemberDraft, value: string) => void;
   onToggle: (field: "isActive", value: boolean) => void;
   onSave: () => void;
-  onPickImage: () => void;
-  onUploadImage: (file: File) => void;
+  onPickImage: (field: "memberDraft.profileImage" | "memberDraft.image") => void;
 }) {
   return (
     <>
@@ -360,8 +360,6 @@ function ExecutiveCouncilDrawer({
             onChange={onChange}
             onToggle={onToggle}
             onPickImage={onPickImage}
-            onUploadImage={onUploadImage}
-            uploadingImage={uploadingImage}
           />
         </div>
         <div className="executive-member-drawer__footer">
@@ -458,6 +456,7 @@ function ExecutiveCouncilTable({
         <table className="executive-members-table">
           <thead>
             <tr>
+              <th>Image</th>
               <th>Logo</th>
               <th>Full Name</th>
               <th>Designation</th>
@@ -471,13 +470,13 @@ function ExecutiveCouncilTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8}>
+                <td colSpan={9}>
                   <div className="executive-table-state">Loading members...</div>
                 </td>
               </tr>
             ) : members.length === 0 ? (
               <tr>
-                <td colSpan={8}>
+                <td colSpan={9}>
                   <div className="executive-table-state">
                     <i className="fa fa-users"></i>
                     <span>No members found</span>
@@ -489,9 +488,18 @@ function ExecutiveCouncilTable({
                 {members.map((member, index) => (
                   <tr key={`${member.name}-${index}`}>
                     <td>
-                      <div className="executive-table-avatar">
+                      <div className="executive-table-avatar executive-table-photo-preview">
+                        {member.profileImage ? (
+                          <img src={addUrlToFile(member.profileImage)} alt={member.name} />
+                        ) : (
+                          <i className="fa fa-user"></i>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="executive-table-avatar executive-table-logo-preview">
                         {member.image ? (
-                          <img src={addUrlToFile(member.image)} alt={member.name} />
+                          <img src={addUrlToFile(member.image)} alt={member.company || member.name} />
                         ) : (
                           <i className="fa fa-image"></i>
                         )}
@@ -605,7 +613,6 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
   const [memberDraft, setMemberDraft] = useState<MemberDraft>(createEmptyExecutiveCouncilMember());
   const [memberErrors, setMemberErrors] = useState<MemberFormErrors>({});
   const [savingMember, setSavingMember] = useState(false);
-  const [uploadingMemberImage, setUploadingMemberImage] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<{
     index: number;
     data: ExecutiveCouncilMember;
@@ -778,6 +785,10 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
       setMemberDraft((oldDraft) => ({ ...oldDraft, image: img.filename }));
       return;
     }
+    if (selectedFileFor === "memberDraft.profileImage") {
+      setMemberDraft((oldDraft) => ({ ...oldDraft, profileImage: img.filename }));
+      return;
+    }
 
     void setFieldValue(selectedFileFor, img.filename);
   }
@@ -817,6 +828,7 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
       name: memberDraft.name.trim(),
       designation: memberDraft.designation.trim(),
       company: memberDraft.company.trim(),
+      profileImage: memberDraft.profileImage || "",
       image: memberDraft.image,
       sortOrder: Number(memberDraft.sortOrder) || values.councilSection.members.length + 1,
       isActive: memberDraft.isActive,
@@ -927,15 +939,6 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
       toast.error(message);
       return [];
     }
-  }
-
-  async function uploadMemberImage(file: File) {
-    setUploadingMemberImage(true);
-    const uploaded = await uploadFiles([file]);
-    if (uploaded[0]?.filename) {
-      setMemberDraft((oldDraft) => ({ ...oldDraft, image: uploaded[0].filename }));
-    }
-    setUploadingMemberImage(false);
   }
 
   function originalIndexFromVisible(visibleIndex: number) {
@@ -1311,12 +1314,10 @@ function ExecutiveCouncilAdminContent({ view }: { view: ExecutiveCouncilAdminVie
         onClose={() => {
           if (!savingMember) setDrawerOpen(false);
         }}
-        onPickImage={() => setSelectedFileFor("memberDraft.image")}
+        onPickImage={setSelectedFileFor}
         onSave={saveMember}
-        onUploadImage={uploadMemberImage}
         open={drawerOpen}
         saving={savingMember}
-        uploadingImage={uploadingMemberImage}
       />
       ) : null}
 
