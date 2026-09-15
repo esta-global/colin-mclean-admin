@@ -8017,7 +8017,8 @@ body.post-editor-expanded-open {
 }
 
 .blog-section-image-row:focus-within,
-.blog-section-grid-editor__item:focus-within {
+.blog-section-grid-editor__item:focus-within,
+.blog-section-split-editor__image:focus-within {
   box-shadow: 0 0 0 3px rgba(20, 115, 255, 0.08);
 }
 
@@ -8044,6 +8045,59 @@ body.post-editor-expanded-open {
 .blog-section-help {
   color: #5b6f8b;
   font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.blog-section-split-editor {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.blog-section-split-editor.is-image-right {
+  grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
+}
+
+.blog-section-split-editor.is-image-right .blog-section-split-editor__image {
+  order: 2;
+}
+
+.blog-section-split-editor.is-image-right .blog-section-rich-text {
+  order: 1;
+}
+
+.blog-section-split-editor__image {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px dashed #bdd0ea;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.blog-section-split-editor__image img,
+.blog-section-split-editor__image > span {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 1px solid #d9e4f2;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #ffffff;
+}
+
+.blog-section-split-editor__image > span {
+  display: grid;
+  place-items: center;
+  color: #8da0bc;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.blog-section-split-editor__image small {
+  color: #5b6f8b;
+  font-size: 0.76rem;
   font-weight: 700;
 }
 
@@ -9342,8 +9396,15 @@ body.post-editor-expanded-open {
 
   .post-form-layout,
   .post-cover-grid,
-  .post-detail-layout {
+  .post-detail-layout,
+  .blog-section-split-editor,
+  .blog-section-split-editor.is-image-right {
     grid-template-columns: 1fr;
+  }
+
+  .blog-section-split-editor.is-image-right .blog-section-split-editor__image,
+  .blog-section-split-editor.is-image-right .blog-section-rich-text {
+    order: initial;
   }
 
   .post-editor-shell .ck-content figure.image-style-half,

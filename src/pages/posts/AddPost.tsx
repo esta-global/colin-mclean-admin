@@ -220,6 +220,15 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
     updateBlogSection(sectionIndex, { columns, images: images.slice(0, count) });
   }
 
+  function sectionTypeLabel(type: BlogSection["type"]) {
+    if (type === "imageTextLeft") return "Image Left + Text";
+    if (type === "imageTextRight") return "Text Left + Image";
+    if (type === "fullImage") return "Full Image";
+    if (type === "imageGrid") return "Image Grid";
+    if (type === "text") return "Rich Text";
+    return "Heading";
+  }
+
   function sectionsToHtml(sections: BlogSection[]) {
     return sections
       .map((section) => {
@@ -227,6 +236,13 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
         if (section.type === "text") return section.text || "";
         if (section.type === "fullImage" && section.image) {
           return `<figure><img src="${addUrlToFile(section.image)}" alt="${section.imageTitle || ""}" />${section.imageTitle ? `<figcaption>${section.imageTitle}</figcaption>` : ""}</figure>`;
+        }
+        if ((section.type === "imageTextLeft" || section.type === "imageTextRight") && (section.image || section.text)) {
+          const image = section.image
+            ? `<figure><img src="${addUrlToFile(section.image)}" alt="${section.imageTitle || ""}" />${section.imageTitle ? `<figcaption>${section.imageTitle}</figcaption>` : ""}</figure>`
+            : "";
+          const text = section.text ? `<div>${section.text}</div>` : "";
+          return `<div class="${section.type}">${section.type === "imageTextLeft" ? `${image}${text}` : `${text}${image}`}</div>`;
         }
         if (section.type === "imageGrid") {
           const items = section.images
@@ -705,6 +721,8 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                     <button type="button" onClick={() => addBlogSection("heading")}>Add Heading</button>
                     <button type="button" onClick={() => addBlogSection("text")}>Add Rich Text</button>
                     <button type="button" onClick={() => addBlogSection("fullImage")}>Add Full Image</button>
+                    <button type="button" onClick={() => addBlogSection("imageTextLeft")}>Image Left + Text</button>
+                    <button type="button" onClick={() => addBlogSection("imageTextRight")}>Text Left + Image</button>
                     <button type="button" onClick={() => addImageGridSection("2")}>Add 2 Images</button>
                     <button type="button" onClick={() => addImageGridSection("3")}>Add 3 Images</button>
                   </div>
@@ -713,7 +731,7 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                     values.blogSections.map((section, sectionIndex) => (
                       <div className="blog-section-card" key={section.id}>
                         <div className="blog-section-card__head">
-                          <strong>{sectionIndex + 1}. {section.type}</strong>
+                          <strong>{sectionIndex + 1}. {sectionTypeLabel(section.type)}</strong>
                           <div>
                             <button type="button" onClick={() => moveBlogSection(sectionIndex, -1)}>Up</button>
                             <button type="button" onClick={() => moveBlogSection(sectionIndex, 1)}>Down</button>
@@ -781,6 +799,54 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                               placeholder="Image title/caption"
                               value={section.imageTitle}
                             />
+                          </div>
+                        ) : null}
+
+                        {section.type === "imageTextLeft" || section.type === "imageTextRight" ? (
+                          <div className={`blog-section-split-editor ${section.type === "imageTextRight" ? "is-image-right" : "is-image-left"}`}>
+                            <div
+                              className="blog-section-split-editor__image"
+                              onPaste={async (event) => {
+                                const pastedImage = getPastedImageFile(event.clipboardData);
+                                if (!pastedImage) return;
+                                event.preventDefault();
+                                const filename = await uploadPostImageFile(pastedImage);
+                                if (filename) updateBlogSection(sectionIndex, { image: filename });
+                              }}
+                              tabIndex={0}
+                            >
+                              {section.image ? <img src={addUrlToFile(section.image)} alt="" /> : <span>No image</span>}
+                              <input
+                                accept="image/jpeg,image/png,image/webp"
+                                className="form-control"
+                                onChange={async (event) => {
+                                  const file = event.target.files?.[0];
+                                  if (!file) return;
+                                  const filename = await uploadPostImageFile(file);
+                                  if (filename) updateBlogSection(sectionIndex, { image: filename });
+                                  event.target.value = "";
+                                }}
+                                type="file"
+                              />
+                              <input
+                                className="form-control"
+                                onChange={(event) => updateBlogSection(sectionIndex, { imageTitle: event.target.value })}
+                                placeholder="Image title/caption"
+                                value={section.imageTitle}
+                              />
+                              <small>Upload or paste image here</small>
+                            </div>
+                            <div className="blog-section-rich-text">
+                              <CKEditor
+                                editor={ClassicEditor as any}
+                                config={{ extraPlugins: [uploadPlugin] }}
+                                data={section.text}
+                                onChange={(__, editor) => {
+                                  updateBlogSection(sectionIndex, { text: editor.getData() });
+                                }}
+                                id={`blog-section-split-text-${section.id}`}
+                              />
+                            </div>
                           </div>
                         ) : null}
 

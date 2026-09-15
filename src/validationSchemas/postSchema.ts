@@ -1,7 +1,13 @@
 import * as Yup from "yup";
 
 export type ContentType = "blog" | "trivia";
-export type BlogSectionType = "heading" | "text" | "fullImage" | "imageGrid";
+export type BlogSectionType =
+  | "heading"
+  | "text"
+  | "fullImage"
+  | "imageGrid"
+  | "imageTextLeft"
+  | "imageTextRight";
 
 export interface BlogSectionImage {
   image: string;
