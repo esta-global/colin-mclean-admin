@@ -11,6 +11,7 @@ type ContactInquiryDetailsData = {
   fullName?: string;
   name?: string;
   email?: string;
+  phone?: string;
   company?: string;
   subject?: string;
   category?: string;
@@ -72,12 +73,13 @@ export function ContactInquiryDetails() {
     return "is-new";
   }
 
-  const infoItems = [
+  const infoItems: { label: string; value: string; isEmail?: boolean; isCategory?: boolean }[] = [
     { label: "Full Name", value: displayName },
-    { label: "Email", value: details.email || "-" },
+    { label: "Email", value: details.email || "-", isEmail: !!details.email },
+    { label: "Phone", value: details.phone || "-" },
     { label: "Company", value: details.company || "-" },
     { label: "Subject", value: details.subject || "-" },
-    { label: "Category", value: details.category || "-" },
+    { label: "Category", value: details.category || "-", isCategory: !!details.category },
     { label: "Created At", value: createdAt },
     { label: "Updated At", value: updatedAt },
   ];
@@ -91,7 +93,7 @@ export function ContactInquiryDetails() {
           <div className="marketplace-page-header__actions">
             <GoBackButton />
             <span className="marketplace-page-eyebrow">
-              IFMA Workspace
+              Colin McLean
             </span>
           </div>
           <h1>Contact Inquiry Details</h1>
@@ -103,6 +105,7 @@ export function ContactInquiryDetails() {
             to={`/admin/contact-inquiries/edit/${recordId}`}
             className="btn marketplace-primary-action"
           >
+            <i className="fa fa-pencil-alt me-2" />
             Edit Inquiry
           </Link>
         ) : null}
@@ -118,14 +121,22 @@ export function ContactInquiryDetails() {
                   details.status,
                 )}`}
               >
-                {details.status || "-"}
+                {details.status || "New"}
               </span>
               <h2>{displayName}</h2>
-              <p>{details.email || "No email available"}</p>
+              <p>
+                {details.email ? (
+                  <a href={`mailto:${details.email}`} className="text-muted text-decoration-none">
+                    {details.email}
+                  </a>
+                ) : (
+                  "No email available"
+                )}
+              </p>
 
               <div className="contact-inquiry-profile-meta">
                 <span>Category</span>
-                <strong>{details.category || "-"}</strong>
+                <strong>{details.category || "General Inquiry"}</strong>
               </div>
 
               {details.email ? (
@@ -149,7 +160,21 @@ export function ContactInquiryDetails() {
                 {infoItems.map((item) => (
                   <div className="contact-inquiry-info-row" key={item.label}>
                     <span>{item.label}</span>
-                    <strong>{item.value}</strong>
+                    {item.isEmail ? (
+                      <strong>
+                        <a href={`mailto:${item.value}`} className="text-dark">
+                          {item.value}
+                        </a>
+                      </strong>
+                    ) : item.isCategory ? (
+                      <strong>
+                        <span className="badge badge-light border text-dark font-weight-bold">
+                          {item.value}
+                        </span>
+                      </strong>
+                    ) : (
+                      <strong>{item.value}</strong>
+                    )}
                   </div>
                 ))}
               </div>
@@ -158,19 +183,47 @@ export function ContactInquiryDetails() {
 
           <div className="contact-inquiry-content-grid">
             <section className="contact-inquiry-content-card">
-              <div className="contact-inquiry-section-head">
-                <span>Customer Message</span>
-                <h2>{details.subject || "Message"}</h2>
+              <div className="contact-inquiry-section-head d-flex justify-content-between align-items-center">
+                <div>
+                  <span>Customer Message</span>
+                  <h2>{details.subject || "Message"}</h2>
+                </div>
+                {details.category ? (
+                  <span className="badge badge-light border text-muted">
+                    {details.category}
+                  </span>
+                ) : null}
               </div>
-              <p>{details.message || "-"}</p>
+              <div className="p-3 rounded" style={{ backgroundColor: "#fcfbf8", borderLeft: "3px solid #ebc43d" }}>
+                <p>{details.message || "No message content provided."}</p>
+              </div>
             </section>
 
             <section className="contact-inquiry-content-card contact-inquiry-notes-card">
-              <div className="contact-inquiry-section-head">
-                <span>Internal</span>
-                <h2>Admin Notes</h2>
+              <div className="contact-inquiry-section-head d-flex justify-content-between align-items-center">
+                <div>
+                  <span>Internal</span>
+                  <h2>Admin Notes</h2>
+                </div>
+                {recordId ? (
+                  <Link
+                    to={`/admin/contact-inquiries/edit/${recordId}`}
+                    className="btn btn-sm btn-outline-secondary"
+                    style={{ borderRadius: "6px" }}
+                  >
+                    <i className="fa fa-pen me-1" /> Edit Notes
+                  </Link>
+                ) : null}
               </div>
-              <p>{details.adminNotes || "-"}</p>
+              {details.adminNotes ? (
+                <div className="p-3 rounded bg-white border">
+                  <p>{details.adminNotes}</p>
+                </div>
+              ) : (
+                <p className="text-muted font-italic mb-0">
+                  No internal notes recorded yet. Use &ldquo;Edit Inquiry&rdquo; to add follow-up notes.
+                </p>
+              )}
             </section>
           </div>
         </>

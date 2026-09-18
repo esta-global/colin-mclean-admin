@@ -117,7 +117,7 @@ export function EditContactInquiry() {
           <div className="marketplace-page-header__actions">
             <GoBackButton />
             <span className="marketplace-page-eyebrow">
-              IFMA Workspace
+              Colin McLean
             </span>
           </div>
           <h1>Update Contact Inquiry</h1>

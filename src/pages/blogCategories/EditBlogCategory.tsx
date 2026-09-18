@@ -4,6 +4,7 @@ import {
   SubmitButton,
   TextareaBox,
 } from "../../components";
+import { ImageUploadBox } from "../../components/ui/ImageUploadBox";
 import { FormikHelpers, useFormik } from "formik";
 import {
   categorySchema,
@@ -216,6 +217,96 @@ export function EditBlogCategory() {
                         {errors.status}
                       </p>
                     ) : null}
+                      </div>
+
+                      <div className="form-group col-md-6">
+                        <label className="blog-category-field-label">Website Visibility</label>
+                        <div className="d-flex align-items-center gap-4 mt-2">
+                          <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                            <input
+                              type="checkbox"
+                              name="showInNavbar"
+                              checked={values.showInNavbar !== false}
+                              onChange={(e) => setFieldValue("showInNavbar", e.target.checked)}
+                            />
+                            <span className="small text-dark font-weight-bold">Show in Navbar</span>
+                          </label>
+
+                          <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                            <input
+                              type="checkbox"
+                              name="showInFooter"
+                              checked={values.showInFooter !== false}
+                              onChange={(e) => setFieldValue("showInFooter", e.target.checked)}
+                            />
+                            <span className="small text-dark font-weight-bold">Show in Footer</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card blog-category-form-card">
+                  <div className="card-body">
+                    <div className="blog-category-form-section-heading">
+                      <div>
+                        <span>Hero & Content</span>
+                        <h2>Category Page Hero & Media</h2>
+                      </div>
+                    </div>
+
+                    <div className="row">
+                      <div className="form-group col-md-6">
+                        <InputBox
+                          label="Eyebrow Tag"
+                          name="eyebrow"
+                          handleBlur={handleBlur}
+                          handleChange={handleChange}
+                          type="text"
+                          placeholder="e.g. Finance & Economics"
+                          value={values.eyebrow || ""}
+                          touched={touched.eyebrow}
+                          error={errors.eyebrow}
+                        />
+                      </div>
+
+                      <div className="form-group col-md-6">
+                        <InputBox
+                          label="Hero Heading"
+                          name="heading"
+                          handleBlur={handleBlur}
+                          handleChange={handleChange}
+                          type="text"
+                          placeholder="e.g. Industry Trends Reshaping the Market"
+                          value={values.heading || ""}
+                          touched={touched.heading}
+                          error={errors.heading}
+                        />
+                      </div>
+
+                      <div className="form-group col-md-12">
+                        <TextareaBox
+                          label="Hero Subheading"
+                          name="subheading"
+                          handleBlur={handleBlur}
+                          handleChange={handleChange}
+                          placeholder="e.g. Key shifts in markets, consumer demand, competition..."
+                          value={values.subheading || ""}
+                          touched={touched.subheading}
+                          error={errors.subheading}
+                        />
+                      </div>
+
+                      <div className="form-group col-md-12 mb-0">
+                        <ImageUploadBox
+                          label="Category Banner / Card Image"
+                          name="image"
+                          value={values.image || ""}
+                          onChange={(filename) => setFieldValue("image", filename)}
+                          hint="Featured image used in the category hero background and topic cards."
+                          minHeight={200}
+                        />
                       </div>
                     </div>
                   </div>

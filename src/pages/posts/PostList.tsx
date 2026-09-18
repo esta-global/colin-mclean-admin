@@ -35,19 +35,19 @@ const contentListLabels: Record<ContentType, ContentListLabels> = {
     searchPlaceholder: "Search blogs",
     csvFileName: "blogs",
   },
-  trivia: {
-    eyebrow: "Content",
-    title: "Trivia",
-    description: "Manage trivia stories, visibility, and publishing status.",
-    addText: "Add Trivia",
-    searchPlaceholder: "Search trivia",
-    csvFileName: "trivia",
+  essay: {
+    eyebrow: "Essays",
+    title: "Essays",
+    description: "Manage essay articles, visibility, and publishing status.",
+    addText: "Add Essay",
+    searchPlaceholder: "Search essays",
+    csvFileName: "essays",
   },
 };
 
 function contentPaths(type: ContentType) {
-  return type === "trivia"
-    ? { list: "/trivia-posts", add: "/trivia-posts/add", edit: "/trivia-posts/edit", details: "/trivia-posts/details" }
+  return type === "essay"
+    ? { list: "/essays", add: "/essays/add", edit: "/essays/edit", details: "/essays/details" }
     : { list: "/posts", add: "/posts/add", edit: "/posts/edit", details: "/posts/details" };
 }
 

@@ -22,10 +22,10 @@ const detailLabels: Record<ContentType, { singular: string; editPath: string; de
     editPath: "/posts/edit",
     description: "Review the public preview, publishing details, and SEO metadata.",
   },
-  trivia: {
-    singular: "Trivia",
-    editPath: "/trivia-posts/edit",
-    description: "Review the trivia preview, publishing details, and SEO metadata.",
+  essay: {
+    singular: "Essay",
+    editPath: "/essays/edit",
+    description: "Review the essay preview, publishing details, and SEO metadata.",
   },
 };
 
@@ -119,7 +119,7 @@ export function PostDetails({ defaultType = "blog" }: { defaultType?: ContentTyp
 
                 <div className="post-detail-byline">
                   <span>
-                    By <strong>{blogDetails?.author?.name || "-"}</strong>
+                    By <strong>{blogDetails?.author?.name || "Colin McLean"}</strong>
                   </span>
                   <span className="post-detail-dot"></span>
                   <span>
@@ -167,7 +167,9 @@ export function PostDetails({ defaultType = "blog" }: { defaultType?: ContentTyp
                 <h2>Quick info</h2>
               </div>
               <InfoRow label="Slug" value={blogDetails?.slug} />
-              <InfoRow label="Author" value={blogDetails?.author?.name} />
+              {blogDetails?.author?.name ? (
+                <InfoRow label="Author" value={blogDetails?.author?.name} />
+              ) : null}
               <InfoRow label="Category" value={blogDetails?.category?.name} />
               <InfoRow
                 label="Created"

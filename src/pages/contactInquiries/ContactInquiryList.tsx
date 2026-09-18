@@ -126,7 +126,7 @@ export function ContactInquiryList() {
           <div className="marketplace-page-header__actions">
             <GoBackButton />
             <span className="marketplace-page-eyebrow">
-              IFMA Workspace
+              Colin McLean
             </span>
           </div>
           <h1>Contact Inquiries</h1>
@@ -193,11 +193,10 @@ export function ContactInquiryList() {
                 <table className="table table-hover">
                   <thead>
                     <tr>
-                      <th>Full Name</th>
+                      <th>Name</th>
                       <th>Email</th>
-                      <th>Company</th>
-                      <th>Subject</th>
-                      <th>Category</th>
+                      <th>Phone</th>
+                      <th>Message</th>
                       <th>Status</th>
                       <th>Created At</th>
                       <th>Actions</th>
@@ -205,22 +204,20 @@ export function ContactInquiryList() {
                   </thead>
                   <tbody>
                     {records.length ? (
-                      records.map((record) => {
+                      records.map((record: any) => {
                         const recordId = record._id || record.id || "";
                         return (
                           <tr key={recordId}>
                             <td>
-                              <div className="marketplace-name-cell">
-                                <strong>{record.fullName || record.name || "-"}</strong>
-                                <span>{record.company || "No company"}</span>
-                              </div>
+                              <strong>{record.name || record.fullName || "-"}</strong>
                             </td>
                             <td className="contact-inquiry-muted-cell">
                               {record.email || "-"}
                             </td>
-                            <td>{record.company || "-"}</td>
-                            <td>{record.subject || "-"}</td>
-                            <td>{record.category || "-"}</td>
+                            <td>{record.phone || "-"}</td>
+                            <td style={{ maxWidth: "250px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {record.message || "-"}
+                            </td>
                             <td>
                               <span
                                 className={`marketplace-status-pill contact-inquiry-status-pill ${getStatusClass(

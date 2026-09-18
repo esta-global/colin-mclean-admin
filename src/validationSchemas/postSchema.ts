@@ -1,6 +1,6 @@
 import * as Yup from "yup";
 
-export type ContentType = "blog" | "trivia";
+export type ContentType = "blog" | "essay";
 export type BlogSectionType =
   | "heading"
   | "text"
@@ -26,14 +26,14 @@ export interface BlogSection {
 }
 
 export const postSchema = Yup.object({
-  type: Yup.string().oneOf(["blog", "trivia"]).required().label("Type"),
+  type: Yup.string().oneOf(["blog", "essay"]).required().label("Type"),
   title: Yup.string().required().label("Title"),
   slug: Yup.string().required().label("Slug"),
   content: Yup.string().label("Content"),
   excerpt: Yup.string().label("Excerpt"),
   coverImage: Yup.string().required().label("Cover Image"),
 
-  author: Yup.object().required().label("Author"),
+  author: Yup.object().nullable().notRequired().label("Author"),
   category: Yup.object().required().label("Category"),
 
   tags: Yup.string().label("Tags"),

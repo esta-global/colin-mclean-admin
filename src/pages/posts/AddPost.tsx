@@ -47,13 +47,13 @@ const contentFormLabels: Record<ContentType, {
     addPath: "/posts",
     library: "blog library",
   },
-  trivia: {
-    plural: "Trivia",
-    singular: "Trivia",
-    eyebrow: "Content",
-    description: "Create a trivia story with publishing details, cover media, and SEO metadata.",
-    addPath: "/trivia-posts",
-    library: "trivia library",
+  essay: {
+    plural: "Essays",
+    singular: "Essay",
+    eyebrow: "Essays",
+    description: "Create an essay with publishing details, cover media, and SEO metadata.",
+    addPath: "/essays",
+    library: "essay library",
   },
 };
 
@@ -61,7 +61,6 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
   const navigate = useNavigate();
   const labels = contentFormLabels[defaultType];
   const [loading, setLoading] = useState<boolean>(false);
-  const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
   const [contentEditor, setContentEditor] = useState<any>(null);
   const [isEditorExpanded, setIsEditorExpanded] = useState(false);
@@ -93,7 +92,6 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
           ? JSON.stringify({ blogSections })
           : values.schemaData || "",
         category: values.category?.value,
-        author: values.author?.value,
       };
 
       const apiResponse = await post("/blogs", newValue, true);
@@ -405,23 +403,6 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
     getData();
   }, []);
 
-  // get author
-  useEffect(function () {
-    async function getData() {
-      const apiResponse = await get("/authors?limit=0", true);
-      if (apiResponse?.status == 200) {
-        const modifiedValue = apiResponse?.body?.map((value: any) => {
-          return {
-            label: value.name,
-            value: value._id,
-          };
-        });
-        setAuthors(modifiedValue);
-      }
-    }
-    getData();
-  }, []);
-
   // handleDeleteFile
   async function handleDeleteFile(
     event: React.MouseEvent<HTMLButtonElement>,
@@ -597,7 +578,7 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                     />
                   </div>
                   {/* Select Category */}
-                  <div className="form-group col-md-6">
+                  <div className="form-group col-md-12">
                     <CustomSelect
                       label="Select Category"
                       placeholder="Select Category"
@@ -613,27 +594,6 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                       }}
                       handleBlur={() => {
                         setFieldTouched("category", true);
-                      }}
-                    />
-                  </div>
-
-                  {/* Select Author */}
-                  <div className="form-group col-md-6">
-                    <CustomSelect
-                      label="Select Author"
-                      placeholder="Select Author"
-                      name="author"
-                      required={true}
-                      options={authors}
-                      value={values.author}
-                      error={errors.author}
-                      touched={touched.author}
-                      isMulti={false}
-                      handleChange={(value) => {
-                        setFieldValue("author", value);
-                      }}
-                      handleBlur={() => {
-                        setFieldTouched("author", true);
                       }}
                     />
                   </div>
@@ -1183,7 +1143,7 @@ export function AddPost({ defaultType = "blog" }: { defaultType?: ContentType })
                   </li>
                   <li>
                     <i className="fa fa-check"></i>
-                    Category and author
+                    Category selection
                   </li>
                   <li>
                     <i className="fa fa-check"></i>

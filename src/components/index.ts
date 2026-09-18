@@ -7,3 +7,4 @@ export * from "./ui/DataTable";
 export * from "./ui/Pagination";
 export * from "./ui/OverlayLoading";
 export * from "./ui/CustomSelect";
+export * from "./ui/ImageUploadBox";

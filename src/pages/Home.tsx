@@ -9,27 +9,19 @@ import {
   LuArrowDownRight,
   LuArrowRight,
   LuArrowUpRight,
-  LuBarChart3,
-  LuBell,
+  LuBookOpen,
   LuCalendarDays,
   LuCheckCircle2,
   LuChevronDown,
-  LuClipboardList,
   LuClock3,
   LuExternalLink,
   LuFileText,
-  LuHeart,
-  LuLineChart,
+  LuFolderTree,
+  LuHome,
   LuMail,
-  LuPackage,
-  LuPlug,
-  LuRefreshCw,
-  LuSettings,
+  LuPenTool,
   LuSparkles,
-  LuStore,
-  LuTrendingUp,
-  LuUsers,
-  LuZap,
+  LuUserCheck,
 } from "react-icons/lu";
 
 type DashboardStatCardProps = {
@@ -50,217 +42,119 @@ type QuickActionProps = {
   onClick: () => void;
 };
 
-type DemoUser = {
-  _id: string;
-  name: string;
-  email: string;
-  mobile: string;
-  countryCode: string;
-  status: boolean;
-  isDeleted: boolean;
-  createdAt: string;
-};
-
-type DemoListing = {
-  _id: string;
-  title: string;
-  userName: string;
-  marketplace: string;
-  category: string;
-  price: number;
-  condition: string;
-  confidence_score: number;
-  status: boolean;
-  isDeleted: boolean;
-  createdAt: string;
-  images: string[];
-};
-
-type DemoBlog = {
+type DemoPost = {
   _id: string;
   title: string;
   slug: string;
+  type: "blog" | "essay";
   authorName: string;
   categoryName: string;
   excerpt: string;
+  readingTime?: string;
   status: boolean;
-  isDeleted: boolean;
   createdAt: string;
 };
 
-const demoUsers: DemoUser[] = [
-  {
-    _id: "u1",
-    name: "Ananya Verma",
-    email: "ananya@example.com",
-    mobile: "9876543210",
-    countryCode: "+91",
-    status: true,
-    isDeleted: false,
-    createdAt: "2026-07-22T08:10:00Z",
-  },
-  {
-    _id: "u2",
-    name: "Rahul Mehta",
-    email: "rahul@example.com",
-    mobile: "9811122233",
-    countryCode: "+91",
-    status: true,
-    isDeleted: false,
-    createdAt: "2026-07-19T09:35:00Z",
-  },
-  {
-    _id: "u3",
-    name: "Sana Khan",
-    email: "sana@example.com",
-    mobile: "9900011122",
-    countryCode: "+91",
-    status: false,
-    isDeleted: false,
-    createdAt: "2026-07-16T12:50:00Z",
-  },
-  {
-    _id: "u4",
-    name: "Vikram Singh",
-    email: "vikram@example.com",
-    mobile: "9988776655",
-    countryCode: "+91",
-    status: true,
-    isDeleted: false,
-    createdAt: "2026-07-11T15:20:00Z",
-  },
-  {
-    _id: "u5",
-    name: "Meera Joshi",
-    email: "meera@example.com",
-    mobile: "9765432100",
-    countryCode: "+91",
-    status: true,
-    isDeleted: true,
-    createdAt: "2026-07-05T06:45:00Z",
-  },
-];
+type DemoInquiry = {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  status: "pending" | "reviewed" | "replied";
+  createdAt: string;
+};
 
-const demoListings: DemoListing[] = [
-  {
-    _id: "l1",
-    title: "Vintage Brass Table Lamp",
-    userName: "Ananya Verma",
-    marketplace: "Amazon",
-    category: "Home Decor",
-    price: 3499,
-    condition: "Used - Good",
-    confidence_score: 92,
-    status: true,
-    isDeleted: false,
-    createdAt: "2026-07-22T11:10:00Z",
-    images: [
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400",
-    ],
-  },
-  {
-    _id: "l2",
-    title: "Wooden Office Chair",
-    userName: "Rahul Mehta",
-    marketplace: "Flipkart",
-    category: "Furniture",
-    price: 5499,
-    condition: "Refurbished",
-    confidence_score: 84,
-    status: true,
-    isDeleted: false,
-    createdAt: "2026-07-21T13:25:00Z",
-    images: [
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400",
-    ],
-  },
-  {
-    _id: "l3",
-    title: "Leather Sling Bag",
-    userName: "Sana Khan",
-    marketplace: "eBay",
-    category: "Accessories",
-    price: 2199,
-    condition: "New",
-    confidence_score: 88,
-    status: false,
-    isDeleted: false,
-    createdAt: "2026-07-18T10:00:00Z",
-    images: [
-      "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=400",
-    ],
-  },
-  {
-    _id: "l4",
-    title: "Ceramic Tea Set",
-    userName: "Vikram Singh",
-    marketplace: "Shopify",
-    category: "Kitchenware",
-    price: 1599,
-    condition: "New",
-    confidence_score: 79,
-    status: true,
-    isDeleted: false,
-    createdAt: "2026-07-14T08:15:00Z",
-    images: [
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400",
-    ],
-  },
-];
-
-const demoBlogs: DemoBlog[] = [
+const demoPosts: DemoPost[] = [
   {
     _id: "b1",
-    title: "How to write better product titles",
-    slug: "write-better-product-titles",
-    authorName: "Editorial Team",
-    categoryName: "Selling Tips",
+    title: "The Architecture of Financial Governance",
+    slug: "architecture-financial-governance",
+    type: "blog",
+    authorName: "Colin McLean",
+    categoryName: "Governance & Leadership",
     excerpt:
-      "Short, search-friendly titles can improve discoverability and clicks.",
+      "A systematic evaluation of corporate stewardship, fiduciary standards, and institutional oversight.",
+    readingTime: "6 min read",
     status: true,
-    isDeleted: false,
-    createdAt: "2026-07-23T07:45:00Z",
+    createdAt: "2026-08-10T10:00:00Z",
+  },
+  {
+    _id: "e1",
+    title: "Capital Markets in an Era of Uncertainty",
+    slug: "capital-markets-uncertainty",
+    type: "essay",
+    authorName: "Colin McLean",
+    categoryName: "Global Economics",
+    excerpt:
+      "Examining long-term macroeconomic volatility, liquidity trends, and geopolitical headwinds.",
+    readingTime: "12 min read",
+    status: true,
+    createdAt: "2026-08-04T14:30:00Z",
   },
   {
     _id: "b2",
-    title: "What buyers expect in a clean listing",
-    slug: "clean-listing-expectations",
-    authorName: "Aditi Sharma",
-    categoryName: "Marketplace",
+    title: "Navigating Energy Transitions in the North Sea",
+    slug: "navigating-energy-transitions",
+    type: "blog",
+    authorName: "Colin McLean",
+    categoryName: "Energy & Infrastructure",
     excerpt:
-      "Good images, clear condition notes, and honest pricing build trust.",
+      "Strategic perspectives on capital reallocation and sustainable modernization.",
+    readingTime: "8 min read",
     status: true,
-    isDeleted: false,
-    createdAt: "2026-07-20T09:20:00Z",
+    createdAt: "2026-07-28T09:15:00Z",
   },
   {
-    _id: "b3",
-    title: "Best categories for fast-moving inventory",
-    slug: "fast-moving-inventory-categories",
-    authorName: "Editorial Team",
-    categoryName: "Insights",
-    excerpt: "Focus on categories that keep rotation high and returns low.",
+    _id: "e2",
+    title: "Philosophy of Long-Horizon Investment",
+    slug: "philosophy-long-horizon-investment",
+    type: "essay",
+    authorName: "Colin McLean",
+    categoryName: "Investment Strategy",
+    excerpt:
+      "The enduring principles that separate speculative momentum from disciplined intrinsic growth.",
+    readingTime: "15 min read",
     status: false,
-    isDeleted: false,
-    createdAt: "2026-07-17T10:30:00Z",
+    createdAt: "2026-07-20T16:45:00Z",
+  },
+];
+
+const demoInquiries: DemoInquiry[] = [
+  {
+    _id: "i1",
+    name: "Alistair Crawford",
+    email: "a.crawford@aberdeen-invest.com",
+    phone: "+44 1224 554321",
+    message: "Requesting Colin McLean for a keynote lecture on Scottish Financial Governance.",
+    status: "pending",
+    createdAt: "2026-08-12T11:20:00Z",
+  },
+  {
+    _id: "i2",
+    name: "Dr. Fiona Campbell",
+    email: "fcampbell@ed.ac.uk",
+    phone: "+44 131 650 1000",
+    message: "Inquiry regarding academic symposium participation and guest lecture series.",
+    status: "reviewed",
+    createdAt: "2026-08-08T15:40:00Z",
+  },
+  {
+    _id: "i3",
+    name: "Marcus Vance",
+    email: "marcus.vance@vancecapital.co.uk",
+    phone: "+44 20 7946 0912",
+    message: "Seeking permissions for syndication of the 'Capital Markets' essay.",
+    status: "replied",
+    createdAt: "2026-08-01T08:15:00Z",
   },
 ];
 
 function formatNumber(value: unknown) {
   const numberValue = Number(value || 0);
   return Number.isFinite(numberValue)
-    ? numberValue.toLocaleString("en-IN")
+    ? numberValue.toLocaleString("en-US")
     : "0";
-}
-
-function formatMoney(value: unknown) {
-  const numberValue = Number(value || 0);
-  return `₹${Number.isFinite(numberValue) ? numberValue.toLocaleString("en-IN") : "0"}`;
-}
-
-function formatPercent(value: unknown) {
-  const numberValue = Number(value || 0);
-  return `${Math.round(Number.isFinite(numberValue) ? numberValue : 0)}%`;
 }
 
 function isWithinRange(date: string, startDate: Date, endDate: Date) {
@@ -270,15 +164,6 @@ function isWithinRange(date: string, startDate: Date, endDate: Date) {
     "day",
     "[]",
   );
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 }
 
 function TrendBadge({
@@ -366,20 +251,10 @@ function SectionHeading({
   );
 }
 
-function StatusBadge({
-  status,
-  isDeleted,
-}: {
-  status: boolean;
-  isDeleted: boolean;
-}) {
-  if (isDeleted) {
-    return <span className="ss-dashboard-status-badge">Deleted</span>;
-  }
-
+function StatusBadge({ status }: { status: boolean }) {
   return (
-    <span className="ss-dashboard-status-badge">
-      {status ? "Active" : "Draft"}
+    <span className={`ss-dashboard-status-badge ${status ? "is-active" : "is-draft"}`}>
+      {status ? "Published" : "Draft"}
     </span>
   );
 }
@@ -389,193 +264,132 @@ export function Home() {
 
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [selectionRange, setSelectionRange] = useState({
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1),
     endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
     key: "selection",
   });
 
-  const filteredUsers = demoUsers.filter((item) =>
-    isWithinRange(
-      item.createdAt,
-      selectionRange.startDate,
-      selectionRange.endDate,
-    ),
+  const filteredPosts = demoPosts.filter((item) =>
+    isWithinRange(item.createdAt, selectionRange.startDate, selectionRange.endDate),
   );
-  const filteredListings = demoListings.filter((item) =>
-    isWithinRange(
-      item.createdAt,
-      selectionRange.startDate,
-      selectionRange.endDate,
-    ),
-  );
-  const filteredBlogs = demoBlogs.filter((item) =>
-    isWithinRange(
-      item.createdAt,
-      selectionRange.startDate,
-      selectionRange.endDate,
-    ),
+  const filteredInquiries = demoInquiries.filter((item) =>
+    isWithinRange(item.createdAt, selectionRange.startDate, selectionRange.endDate),
   );
 
-  const activeUsers = filteredUsers.filter(
-    (item) => item.status && !item.isDeleted,
-  ).length;
-  const activeListings = filteredListings.filter(
-    (item) => item.status && !item.isDeleted,
-  ).length;
-  const publishedBlogs = filteredBlogs.filter(
-    (item) => item.status && !item.isDeleted,
-  ).length;
-  const draftBlogs = filteredBlogs.filter(
-    (item) => !item.status && !item.isDeleted,
-  ).length;
-  const softDeletedRecords =
-    filteredUsers.filter((item) => item.isDeleted).length +
-    filteredListings.filter((item) => item.isDeleted).length +
-    filteredBlogs.filter((item) => item.isDeleted).length;
+  const blogs = filteredPosts.filter((p) => p.type === "blog");
+  const essays = filteredPosts.filter((p) => p.type === "essay");
 
-  const averageConfidence = filteredListings.length
-    ? filteredListings.reduce(
-        (sum, item) => sum + Number(item.confidence_score || 0),
-        0,
-      ) / filteredListings.length
-    : 0;
+  const publishedBlogs = blogs.filter((b) => b.status).length;
+  const publishedEssays = essays.filter((e) => e.status).length;
+  const pendingInquiries = filteredInquiries.filter((i) => i.status === "pending").length;
 
   const selectedRangeLabel = `${moment(selectionRange.startDate).format(
     "DD MMM YYYY",
   )} - ${moment(selectionRange.endDate).format("DD MMM YYYY")}`;
 
-  const topListings = [...filteredListings]
-    .sort(
-      (a, b) => moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf(),
-    )
-    .slice(0, 4);
-  const topUsers = [...filteredUsers]
-    .sort(
-      (a, b) => moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf(),
-    )
-    .slice(0, 4);
-  const topBlogs = [...filteredBlogs]
-    .sort(
-      (a, b) => moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf(),
-    )
-    .slice(0, 3);
-
-  const quickActions = [
+  const quickActions: QuickActionProps[] = [
     {
-      title: "Add User",
-      description: "Create a new admin-managed seller profile.",
-      cta: "Create",
-      icon: <LuUsers />,
-      onClick: () => navigate("/users/add"),
+      title: "Write Blog",
+      description: "Create and publish a new category-wise article.",
+      cta: "New Blog",
+      icon: <LuPenTool />,
+      onClick: () => navigate("/posts/add"),
     },
     {
-      title: "View Users",
-      description: "Review active, draft, and soft-deleted users.",
-      cta: "Open",
-      icon: <LuUsers />,
-      onClick: () => navigate("/users"),
-    },
-    {
-      title: "View Listings",
-      description: "Inspect marketplace listings and confidence scores.",
-      cta: "Open",
-      icon: <LuPackage />,
-      onClick: () => navigate("/listings"),
-    },
-    {
-      title: "Blog Content",
-      description: "Edit blog page content and publishing blocks.",
-      cta: "Manage",
-      icon: <LuFileText />,
-      onClick: () => navigate("/blogpage"),
+      title: "Write Essay",
+      description: "Draft an in-depth longform research essay.",
+      cta: "New Essay",
+      icon: <LuBookOpen />,
+      onClick: () => navigate("/essays/add"),
     },
     {
       title: "Blog Categories",
-      description: "Maintain categories used by blog entries.",
-      cta: "Manage",
-      icon: <LuClipboardList />,
+      description: "Manage taxonomy, slugs, and topics.",
+      cta: "Categories",
+      icon: <LuFolderTree />,
       onClick: () => navigate("/blogCategories"),
     },
     {
-      title: "Workspace Settings",
-      description: "Adjust store and admin controls.",
-      cta: "Open",
-      icon: <LuSettings />,
-      onClick: () => navigate("/marketplaces"),
+      title: "Contact Enquiries",
+      description: "Review messages from the Colin McLean website.",
+      cta: "Enquiries",
+      icon: <LuMail />,
+      onClick: () => navigate("/admin/contact-inquiries"),
+    },
+    {
+      title: "Home Page Content",
+      description: "Update Hero, Perspectives, and preview sections.",
+      cta: "Edit Home",
+      icon: <LuHome />,
+      onClick: () => navigate("/homepage"),
+    },
+    {
+      title: "About Page Content",
+      description: "Manage bio, role, and portrait photograph.",
+      cta: "Edit About",
+      icon: <LuUserCheck />,
+      onClick: () => navigate("/aboutPage"),
     },
   ];
 
-  const stats = [
-    {
-      title: "Users",
-      value: formatNumber(filteredUsers.length),
-      description: "Total user records in range",
-      trend: 12,
-      trendLabel: `${formatNumber(activeUsers)} active`,
-      icon: <LuUsers />,
-    },
-    {
-      title: "Listings",
-      value: formatNumber(filteredListings.length),
-      description: "Listings created or updated",
-      trend: 8,
-      trendLabel: `${formatNumber(activeListings)} live`,
-      icon: <LuPackage />,
-    },
+  const stats: DashboardStatCardProps[] = [
     {
       title: "Blogs",
-      value: formatNumber(filteredBlogs.length),
-      description: "Blog records in this window",
-      trend: 5,
-      trendLabel: `${formatNumber(publishedBlogs)} published`,
+      value: formatNumber(blogs.length),
+      description: "Published and draft blogs",
+      trend: 10,
+      trendLabel: `${formatNumber(publishedBlogs)} live`,
       icon: <LuFileText />,
+      onClick: () => navigate("/posts"),
     },
     {
-      title: "Draft Blogs",
-      value: formatNumber(draftBlogs),
-      description: "Posts waiting for publish",
-      trend: -3,
-      trendLabel: "Needs review",
-      icon: <LuClock3 />,
+      title: "Essays",
+      value: formatNumber(essays.length),
+      description: "Longform thought pieces",
+      trend: 5,
+      trendLabel: `${formatNumber(publishedEssays)} live`,
+      icon: <LuBookOpen />,
+      onClick: () => navigate("/essays"),
     },
     {
-      title: "Soft Deleted",
-      value: formatNumber(softDeletedRecords),
-      description: "Archived across all models",
-      trend: -1,
-      trendLabel: "Archived",
-      icon: <LuCheckCircle2 />,
+      title: "Enquiries",
+      value: formatNumber(filteredInquiries.length),
+      description: "Contact form submissions",
+      trend: 8,
+      trendLabel: `${formatNumber(pendingInquiries)} pending`,
+      icon: <LuMail />,
+      onClick: () => navigate("/admin/contact-inquiries"),
     },
     {
-      title: "Avg Confidence",
-      value: `${Math.round(averageConfidence)}%`,
-      description: "Listing confidence score",
-      trend: 7,
-      trendLabel: "Model-based",
-      icon: <LuTrendingUp />,
+      title: "Categories",
+      value: "6 Active",
+      description: "Categorised topics",
+      trendLabel: "Taxonomy",
+      icon: <LuFolderTree />,
+      onClick: () => navigate("/blogCategories"),
     },
   ];
 
   const activityItems = [
     {
-      title: "User signups tracked",
-      meta: `${formatNumber(activeUsers)} active users in the selected range`,
-      icon: <LuUsers />,
+      title: "New contact enquiry received",
+      meta: "Alistair Crawford requested a keynote lecture",
+      icon: <LuMail />,
     },
     {
-      title: "Listings reviewed",
-      meta: `${formatNumber(activeListings)} listings marked live`,
-      icon: <LuRefreshCw />,
-    },
-    {
-      title: "Blogs published",
-      meta: `${formatNumber(publishedBlogs)} blog posts ready for readers`,
+      title: "Blog published",
+      meta: "The Architecture of Financial Governance is now live",
       icon: <LuFileText />,
     },
     {
-      title: "Archived records",
-      meta: `${formatNumber(softDeletedRecords)} soft-deleted entries stored safely`,
-      icon: <LuActivity />,
+      title: "Essay drafted",
+      meta: "Philosophy of Long-Horizon Investment saved to drafts",
+      icon: <LuBookOpen />,
+    },
+    {
+      title: "Home page updated",
+      meta: "Perspectives section and Topics updated",
+      icon: <LuHome />,
     },
   ];
 
@@ -584,36 +398,33 @@ export function Home() {
       <section className="ss-dashboard-hero">
         <div>
           <span className="ss-dashboard-eyebrow">
-            <LuZap />
-            IFMA Admin
+            <LuSparkles />
+            Colin McLean Editorial Administration
           </span>
-          <h1>Model dashboard preview</h1>
+          <h1>Welcome to Colin McLean Dashboard</h1>
           <p>
-            Ye temporary dashboard `userModel`, `listingModel`, aur `blogModel`
-            ke around bana hai. Abhi dummy data use ho raha hai, isliye baad me
-            direct API replace kar sakte ho without layout change.
+            Manage Colin McLean's public editorial portal, longform essays, category-wise
+            blog publications, homepage sections, biography, and reader enquiries.
           </p>
         </div>
 
         <div className="ss-dashboard-hero__panel">
           <div className="ss-dashboard-plan-card">
-            <span>Snapshot Window</span>
+            <span>Viewing Period</span>
             <strong>{selectedRangeLabel}</strong>
-            <small>Demo data filtered by selected dates</small>
+            <small>Active editorial publishing window</small>
           </div>
           <div className="ss-dashboard-credit-mini">
-            <span>Active Records</span>
-            <strong>
-              {formatNumber(activeUsers + activeListings + publishedBlogs)}
-            </strong>
+            <span>Total Publications</span>
+            <strong>{formatNumber(blogs.length + essays.length)}</strong>
           </div>
           <button
             type="button"
             className="ss-dashboard-primary-btn"
-            onClick={() => navigate("/listings")}
+            onClick={() => navigate("/posts/add")}
           >
-            <LuSparkles />
-            Open Listings
+            <LuPenTool />
+            Publish New Content
           </button>
         </div>
       </section>
@@ -643,7 +454,7 @@ export function Home() {
               editableDateInputs={true}
               scroll={{ enabled: false }}
               dateDisplayFormat="dd/MM/yyyy"
-              rangeColors={["#1473ff"]}
+              rangeColors={["#ebc43d"]}
             />
 
             <div className="d-flex gap-2 justify-content-end">
@@ -671,7 +482,7 @@ export function Home() {
             <SectionHeading
               icon={<LuSparkles />}
               title="Quick Actions"
-              description="Model-based shortcuts for the admin team."
+              description="Fast shortcuts for content creation and site management."
             />
             <div className="ss-dashboard-actions-grid">
               {quickActions.map((item) => (
@@ -683,139 +494,52 @@ export function Home() {
           <section className="ss-dashboard-panel">
             <div className="ss-dashboard-panel__top">
               <SectionHeading
-                icon={<LuPackage />}
-                title="Recent Listings"
-                description="Latest listing records with model confidence."
+                icon={<LuFileText />}
+                title="Recent Publications"
+                description="Latest blogs and longform essays."
               />
               <button
                 type="button"
                 className="ss-dashboard-link-btn"
-                onClick={() => navigate("/listings")}
+                onClick={() => navigate("/posts")}
               >
-                View all
+                View all blogs
                 <LuExternalLink />
               </button>
             </div>
 
-            {topListings.length ? (
+            {filteredPosts.length ? (
               <div className="ss-dashboard-product-grid">
-                {topListings.map((listing) => (
+                {filteredPosts.map((post) => (
                   <article
                     className="ss-dashboard-product-card"
-                    key={listing._id}
+                    key={post._id}
                   >
-                    <div className="ss-dashboard-product-card__media">
-                      {listing.images[0] ? (
-                        <img src={listing.images[0]} alt={listing.title} />
-                      ) : (
-                        <LuStore />
-                      )}
-                      <StatusBadge
-                        status={listing.status}
-                        isDeleted={listing.isDeleted}
-                      />
-                    </div>
                     <div className="ss-dashboard-product-card__body">
                       <span>
-                        {listing.marketplace} · {listing.category}
+                        {post.type.toUpperCase()} · {post.categoryName}
                       </span>
-                      <h3>{listing.title}</h3>
+                      <h3>{post.title}</h3>
                       <div>
-                        <strong>{formatMoney(listing.price)}</strong>
-                        <small>{listing.userName}</small>
+                        <strong>{post.authorName}</strong>
+                        <small>{post.readingTime || "5 min"}</small>
                       </div>
-                      <small>
-                        {listing.condition} · Confidence{" "}
-                        {formatPercent(listing.confidence_score)}
-                      </small>
+                      <small>{post.excerpt}</small>
                     </div>
                     <div className="ss-dashboard-product-card__actions">
                       <button
                         type="button"
                         onClick={() =>
-                          navigate(`/listings/details/${listing._id}`)
+                          navigate(
+                            post.type === "essay"
+                              ? `/essays/edit/${post._id}`
+                              : `/posts/edit/${post._id}`,
+                          )
                         }
                       >
-                        View
+                        Edit Article
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/listings")}
-                      >
-                        Manage
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="ss-dashboard-empty-state">
-                <LuPackage />
-                <strong>No listings in this range</strong>
-                <p>Try a wider date window to inspect listing activity.</p>
-                <button type="button" onClick={() => navigate("/listings")}>
-                  Open Listings
-                </button>
-              </div>
-            )}
-          </section>
-
-          <section className="ss-dashboard-panel">
-            <div className="ss-dashboard-panel__top">
-              <SectionHeading
-                icon={<LuFileText />}
-                title="Recent Blogs"
-                description="Blog model preview with publish state."
-              />
-              <button
-                type="button"
-                className="ss-dashboard-link-btn"
-                onClick={() => navigate("/blogpage")}
-              >
-                Blog page
-                <LuExternalLink />
-              </button>
-            </div>
-
-            {topBlogs.length ? (
-              <div className="ss-dashboard-product-grid">
-                {topBlogs.map((blog) => (
-                  <article className="ss-dashboard-product-card" key={blog._id}>
-                    <div className="ss-dashboard-product-card__media">
-                      <div className="ss-dashboard-avatar-fallback">
-                        {getInitials(blog.title)}
-                      </div>
-                      <StatusBadge
-                        status={blog.status}
-                        isDeleted={blog.isDeleted}
-                      />
-                    </div>
-                    <div className="ss-dashboard-product-card__body">
-                      <span>
-                        {blog.authorName} · {blog.categoryName}
-                      </span>
-                      <h3>{blog.title}</h3>
-                      <div>
-                        <strong>{blog.status ? "Published" : "Draft"}</strong>
-                        <small>
-                          {moment(blog.createdAt).format("DD MMM YYYY")}
-                        </small>
-                      </div>
-                      <small>{blog.excerpt}</small>
-                    </div>
-                    <div className="ss-dashboard-product-card__actions">
-                      <button
-                        type="button"
-                        onClick={() => navigate("/blogpage")}
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/blogCategories")}
-                      >
-                        Manage
-                      </button>
+                      <StatusBadge status={post.status} />
                     </div>
                   </article>
                 ))}
@@ -823,10 +547,10 @@ export function Home() {
             ) : (
               <div className="ss-dashboard-empty-state">
                 <LuFileText />
-                <strong>No blogs in this range</strong>
-                <p>Publish at least one blog post to see it here.</p>
-                <button type="button" onClick={() => navigate("/blogpage")}>
-                  Open Blog Page
+                <strong>No publications in this range</strong>
+                <p>Create a blog or essay to see it here.</p>
+                <button type="button" onClick={() => navigate("/posts/add")}>
+                  New Blog Post
                 </button>
               </div>
             )}
@@ -834,55 +558,34 @@ export function Home() {
         </div>
 
         <aside className="ss-dashboard-side-column">
-          <section className="ss-dashboard-panel ss-dashboard-credit-card">
-            <SectionHeading
-              icon={<LuStore />}
-              title="Record Health"
-              description="Quick model-level health summary."
-            />
-            <div className="ss-dashboard-credit-card__value">
-              <strong>{formatNumber(activeUsers)}</strong>
-              <span>active users</span>
-            </div>
-            <div className="ss-dashboard-progress">
-              <span
-                style={{
-                  width: `${Math.min(100, (activeListings / Math.max(1, filteredListings.length)) * 100)}%`,
-                }}
-              ></span>
-            </div>
-            <div className="ss-dashboard-credit-card__meta">
-              <span>{formatNumber(activeListings)} active listings</span>
-              <span>{formatNumber(publishedBlogs)} published blogs</span>
-            </div>
-            <button type="button" onClick={() => navigate("/users")}>
-              Manage Users
-            </button>
-          </section>
-
           <section className="ss-dashboard-panel">
-            <SectionHeading
-              icon={<LuUsers />}
-              title="Recent Users"
-              description="User model preview with status and contact details."
-            />
+            <div className="ss-dashboard-panel__top">
+              <SectionHeading
+                icon={<LuMail />}
+                title="Recent Enquiries"
+                description="Inquiries submitted from website contact form."
+              />
+              <button
+                type="button"
+                className="ss-dashboard-link-btn"
+                onClick={() => navigate("/admin/contact-inquiries")}
+              >
+                All Enquiries
+                <LuExternalLink />
+              </button>
+            </div>
             <div className="ss-dashboard-timeline">
-              {topUsers.map((user) => (
-                <article key={user._id}>
-                  <span>{user.name.slice(0, 1)}</span>
+              {filteredInquiries.map((inq) => (
+                <article key={inq._id}>
+                  <span>{inq.name.slice(0, 1)}</span>
                   <div>
-                    <strong>{user.name}</strong>
-                    <small>
-                      {user.email} · {user.countryCode} {user.mobile}
-                    </small>
+                    <strong>{inq.name}</strong>
+                    <small>{inq.email} · {inq.phone}</small>
+                    <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "var(--color-muted)" }}>
+                      {inq.message}
+                    </p>
                   </div>
-                  <em>
-                    {user.isDeleted
-                      ? "Deleted"
-                      : user.status
-                        ? "Active"
-                        : "Pending"}
-                  </em>
+                  <em className={`ss-inquiry-pill ss-inquiry-pill--${inq.status}`}>{inq.status}</em>
                 </article>
               ))}
             </div>
@@ -892,7 +595,7 @@ export function Home() {
             <SectionHeading
               icon={<LuActivity />}
               title="Recent Activity"
-              description="Model changes from the current preview window."
+              description="Editorial and page management updates."
             />
             <div className="ss-dashboard-timeline">
               {activityItems.map((item) => (
@@ -905,59 +608,6 @@ export function Home() {
                 </article>
               ))}
             </div>
-          </section>
-
-          <section className="ss-dashboard-panel ss-dashboard-insights-card">
-            <SectionHeading
-              icon={<LuLineChart />}
-              title="Model Insights"
-              description="Simple placeholders for the future API data."
-            />
-            <div className="ss-dashboard-insight-list">
-              <div>
-                <span>Users total</span>
-                <strong>{formatNumber(filteredUsers.length)}</strong>
-              </div>
-              <div>
-                <span>Listings total</span>
-                <strong>{formatNumber(filteredListings.length)}</strong>
-              </div>
-              <div>
-                <span>Blogs total</span>
-                <strong>{formatNumber(filteredBlogs.length)}</strong>
-              </div>
-            </div>
-          </section>
-
-          <section className="ss-dashboard-footer-widgets">
-            <button type="button">
-              <LuBell />
-              <span>
-                <strong>Announcements</strong>
-                <small>Dummy dashboard is ready for API wiring.</small>
-              </span>
-            </button>
-            <button type="button">
-              <LuHeart />
-              <span>
-                <strong>Listings Review</strong>
-                <small>Confidence and status checks are visible.</small>
-              </span>
-            </button>
-            <button type="button">
-              <LuClipboardList />
-              <span>
-                <strong>Blog Controls</strong>
-                <small>Content and categories stay separate.</small>
-              </span>
-            </button>
-            <button type="button">
-              <LuClock3 />
-              <span>
-                <strong>Latest Updates</strong>
-                <small>Future API responses can plug in here.</small>
-              </span>
-            </button>
           </section>
         </aside>
       </section>

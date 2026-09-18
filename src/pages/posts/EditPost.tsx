@@ -34,11 +34,11 @@ const contentFormLabels: Record<ContentType, {
     description: "Update blog publishing details, cover media, body content, and SEO metadata.",
     library: "blog library",
   },
-  trivia: {
-    singular: "Trivia",
-    eyebrow: "Content",
-    description: "Update trivia publishing details, cover media, body content, and SEO metadata.",
-    library: "trivia library",
+  essay: {
+    singular: "Essay",
+    eyebrow: "Essays",
+    description: "Update essay publishing details, cover media, body content, and SEO metadata.",
+    library: "essay library",
   },
 };
 
@@ -47,7 +47,6 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
   const { id } = useParams();
   const labels = contentFormLabels[defaultType];
   const [loading, setLoading] = useState<boolean>(false);
-  const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
   const [contentEditor, setContentEditor] = useState<any>(null);
   const [isEditorExpanded, setIsEditorExpanded] = useState(false);
@@ -80,7 +79,6 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
           ? JSON.stringify({ blogSections })
           : values.schemaData || "",
         category: values.category?.value,
-        author: values.author?.value,
       };
 
       const apiResponse = await put(`/blogs/${id}`, newValue);
@@ -279,13 +277,6 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
           }
           apiData.blogSections = parseBlogSections(apiData.schemaData);
 
-          if (apiData.author) {
-            apiData.author = {
-              label: apiData?.author?.name,
-              value: apiData.author?._id,
-            };
-          }
-
           setValues(apiData);
         } else {
           toast.error(apiResponse?.message);
@@ -309,23 +300,6 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
           };
         });
         setCategories(modifiedValue);
-      }
-    }
-    getData();
-  }, []);
-
-  // get author
-  useEffect(function () {
-    async function getData() {
-      const apiResponse = await get("/authors?limit=0", true);
-      if (apiResponse?.status == 200) {
-        const modifiedValue = apiResponse?.body?.map((value: any) => {
-          return {
-            label: value.name,
-            value: value._id,
-          };
-        });
-        setAuthors(modifiedValue);
       }
     }
     getData();
@@ -612,7 +586,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                     />
                   </div>
                   {/* Select Category */}
-                  <div className="form-group col-md-6">
+                  <div className="form-group col-md-12">
                     <CustomSelect
                       label="Select Category"
                       placeholder="Select Category"
@@ -628,27 +602,6 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                       }}
                       handleBlur={() => {
                         setFieldTouched("category", true);
-                      }}
-                    />
-                  </div>
-
-                  {/* Select Author */}
-                  <div className="form-group col-md-6">
-                    <CustomSelect
-                      label="Select Author"
-                      placeholder="Select Author"
-                      name="author"
-                      required={true}
-                      options={authors}
-                      value={values.author}
-                      error={errors.author}
-                      touched={touched.author}
-                      isMulti={false}
-                      handleChange={(value) => {
-                        setFieldValue("author", value);
-                      }}
-                      handleBlur={() => {
-                        setFieldTouched("author", true);
                       }}
                     />
                   </div>
@@ -1155,7 +1108,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                   </li>
                   <li>
                     <i className="fa fa-check"></i>
-                    Category and author
+                    Category selection
                   </li>
                   <li>
                     <i className="fa fa-check"></i>

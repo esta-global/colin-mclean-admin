@@ -2,9 +2,17 @@ import { FILE_URL } from "../constants";
 
 export function addUrlToFile(img?: string | null, url?: string) {
   if (!img || typeof img !== "string") return "";
-  if (img.includes("drive.google.com")) return img;
-  else if (url) return `${url}/${img}`;
-  else if (img.includes("api.lamikraft.com")) return img;
+  if (
+    img.startsWith("http://") ||
+    img.startsWith("https://") ||
+    img.startsWith("blob:") ||
+    img.startsWith("data:")
+  ) {
+    return img;
+  }
+  if (img.includes("drive.google.com") || img.includes("api.lamikraft.com")) return img;
+  if (img.startsWith("/")) return img;
+  if (url) return `${url}/${img}`;
   return `${FILE_URL}/${img}`;
 }
 

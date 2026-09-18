@@ -13,6 +13,7 @@ import React, { useEffect, useState } from "react";
 import moment from "moment";
 import { Link } from "react-router-dom";
 import { deleteConfirmation, get, put, remove } from "../../utills";
+import { addUrlToFile } from "../../utills/addUrlToFile";
 import { toast } from "react-toastify";
 
 export function BlogCategoryList() {
@@ -89,30 +90,120 @@ export function BlogCategoryList() {
       },
 
       {
-        Header: "NAME",
+        Header: "CATEGORY",
         accessor: "name",
         Cell: ({ row, value }: any) => {
+          const img = row.original.image;
           return (
-            <div className="blog-category-name-cell">
-              <strong>{value}</strong>
-              <span>{row.original.slug}</span>
+            <div className="d-flex align-items-center gap-3">
+              {img ? (
+                <img
+                  src={addUrlToFile(img)}
+                  alt={value}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    border: "1px solid #ebc43d",
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 8,
+                    background: "#1c211e",
+                    color: "#ebc43d",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    flexShrink: 0,
+                  }}
+                >
+                  {(value || "C")[0]}
+                </div>
+              )}
+              <div className="blog-category-name-cell">
+                <strong>{value}</strong>
+                <span className="text-muted small">/{row.original.slug}</span>
+              </div>
             </div>
           );
         },
       },
       {
-        Header: "SLUG",
-        accessor: "slug",
-        Cell: ({ value }: any) => {
-          return <span className="blog-category-slug">{value}</span>;
+        Header: "HERO HEADING",
+        accessor: "heading",
+        Cell: ({ row, value }: any) => {
+          return (
+            <div style={{ maxWidth: 260 }}>
+              <div className="font-weight-bold text-dark" style={{ fontSize: "0.85rem", lineHeight: 1.3 }}>
+                {value || <span className="text-muted font-italic">No custom heading</span>}
+              </div>
+              {row.original.eyebrow && (
+                <span className="badge badge-light text-muted border mt-1" style={{ fontSize: "0.7rem" }}>
+                  {row.original.eyebrow}
+                </span>
+              )}
+            </div>
+          );
         },
       },
-
       {
-        Header: "CREATED AT",
-        accessor: "createdAt",
+        Header: "PRIORITY",
+        accessor: "priority",
         Cell: ({ value }: any) => {
-          return moment(new Date(value)).format("DD-MM-YYYY");
+          return (
+            <span
+              className="badge"
+              style={{
+                background: "rgba(235, 196, 61, 0.15)",
+                color: "#8d7520",
+                fontWeight: 700,
+                fontSize: "0.82rem",
+                padding: "0.35rem 0.65rem",
+              }}
+            >
+              #{value ?? 0}
+            </span>
+          );
+        },
+      },
+      {
+        Header: "VISIBILITY",
+        id: "visibility",
+        Cell: ({ row }: any) => {
+          const inNav = row.original.showInNavbar !== false;
+          const inFoot = row.original.showInFooter !== false;
+          return (
+            <div className="d-flex flex-column gap-1">
+              <span
+                className="badge"
+                style={{
+                  background: inNav ? "#e8ede6" : "#f1f1f1",
+                  color: inNav ? "#365d47" : "#888",
+                  fontSize: "0.72rem",
+                }}
+              >
+                {inNav ? "✓ Navbar" : "✕ Navbar"}
+              </span>
+              <span
+                className="badge"
+                style={{
+                  background: inFoot ? "#e8ede6" : "#f1f1f1",
+                  color: inFoot ? "#365d47" : "#888",
+                  fontSize: "0.72rem",
+                }}
+              >
+                {inFoot ? "✓ Footer" : "✕ Footer"}
+              </span>
+            </div>
+          );
         },
       },
       {
@@ -283,11 +374,11 @@ export function BlogCategoryList() {
           <div className="blog-category-page-header__actions">
             <GoBackButton />
             <span className="blog-category-page-eyebrow">
-              IFMA Workspace
+              Colin McLean
             </span>
           </div>
           <h1>Blog Categories</h1>
-          <p>Manage categories used to organize IFMA blog content.</p>
+          <p>Manage categories used to organize Colin McLean articles.</p>
         </div>
         <Link
           to={"/blogCategories/add"}

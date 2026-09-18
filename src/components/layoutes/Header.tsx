@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import Face from "../../assets/images/faces/face0.png";
 
 export function Header() {
-  const logoSrc = "/images/ifma-logo.png";
   const navigation = useNavigate();
   function handleDesktopSidebar(evt: React.MouseEvent<HTMLElement>) {
     evt.preventDefault();
@@ -29,26 +28,26 @@ export function Header() {
 
   return (
     <nav className="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
-      <div className="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-        <Link className="navbar-brand brand-logo me-0" to="/">
-          <img className="ifma-header-logo" src={logoSrc} alt="IFMA logo" />
+      <div className="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start px-3">
+        <Link className="navbar-brand brand-logo me-0 d-flex align-items-center" to="/">
+          <span className="cm-admin-wordmark">Colin McLean</span>
         </Link>
         <Link className="navbar-brand brand-logo-mini" to="/">
-          <img className="ifma-header-logo-mini" src={logoSrc} alt="IFMA logo" />
+          <span className="cm-admin-wordmark-mini">CM</span>
         </Link>
       </div>
       <div className="navbar-menu-wrapper d-flex align-items-center justify-content-end">
         <button
           className="navbar-toggler navbar-toggler align-self-center"
           type="button"
-          // data-toggle="minimize"
           onClick={handleDesktopSidebar}
+          aria-label="Toggle desktop sidebar"
         >
           <span className="ti-view-list"></span>
         </button>
         <ul className="navbar-nav mr-lg-2 search-box-container">
           <li className="nav-item nav-search d-none d-lg-block">
-            <span className="ss-workspace-label">IFMA Workspace</span>
+            <span className="cm-workspace-badge">Admin Studio</span>
           </li>
         </ul>
         <ul className="navbar-nav navbar-nav-right">

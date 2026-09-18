@@ -5,6 +5,14 @@ export const categorySchema = Yup.object({
   slug: Yup.string().required().label("Slug"),
 
   priority: Yup.number().required().label("Priority"),
+  heading: Yup.string().label("Hero Heading"),
+  subheading: Yup.string().label("Hero Subheading"),
+  eyebrow: Yup.string().label("Eyebrow Tag"),
+  image: Yup.string().label("Category Image"),
+
+  showInNavbar: Yup.boolean().label("Show in Navbar"),
+  showInFooter: Yup.boolean().label("Show in Footer"),
+
   shortDescription: Yup.string().label("Short Description"),
 
   metaTitle: Yup.string().label("Meta Title"),
@@ -19,6 +27,14 @@ export const categoryInitialValues: CategoryValues = {
   slug: "",
 
   priority: 0,
+  heading: "",
+  subheading: "",
+  eyebrow: "",
+  image: "",
+
+  showInNavbar: true,
+  showInFooter: true,
+
   shortDescription: "",
 
   metaTitle: "",
@@ -33,6 +49,14 @@ export interface CategoryValues {
   slug: string;
 
   priority: number;
+  heading?: string;
+  subheading?: string;
+  eyebrow?: string;
+  image?: string;
+
+  showInNavbar?: boolean;
+  showInFooter?: boolean;
+
   shortDescription: string;
 
   metaTitle: string;
@@ -41,3 +65,4 @@ export interface CategoryValues {
 
   status: string;
 }
+

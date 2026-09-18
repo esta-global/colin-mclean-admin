@@ -40,8 +40,8 @@ export function Login(): ReactNode {
     <>
       {/* Meta Details */}
       <Metadata
-        title="Login to your Account"
-        description="Login to your Account"
+        title="Admin Login | Colin McLean"
+        description="Login to Colin McLean Editorial Studio"
       />
 
       <div className="container-scroller">
@@ -50,14 +50,15 @@ export function Login(): ReactNode {
             <div className="row w-100 mx-0">
               <div className="col-xl-4 col-lg-5 col-md-7 mx-auto">
                 <div className="auth-form-light ss-auth-card text-left">
-                  <div className="brand-logo ss-auth-logo authpage-logo">
-                    <img className="ifma-auth-logo" src={logoSrc} alt="IFMA logo" />
+                  <div className="brand-logo ss-auth-logo authpage-logo mb-3">
+                    <span className="cm-admin-wordmark" style={{ fontSize: "1.75rem" }}>
+                      Colin McLean
+                    </span>
                   </div>
-                  {/* <h4>Hello! let's get started</h4> */}
                   <div className="ss-auth-heading">
-                    <span>Admin Login</span>
-                    <h1>Welcome back</h1>
-                    <p>Sign in to manage listings, marketplace activity, and IFMA workspace data.</p>
+                    <span className="cm-workspace-badge">Admin Studio</span>
+                    <h1 className="mt-2">Welcome back</h1>
+                    <p>Sign in to manage blogs, essays, pages, and inquiries.</p>
                   </div>
                   <form className="ss-auth-form" onSubmit={handleSubmit}>
                     <div className="form-group">

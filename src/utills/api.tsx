@@ -24,8 +24,10 @@ export async function get(endpoint: string, isProtected: boolean = false) {
   };
 
   const token = localStorage.getItem("token");
-  if (isProtected && token) {
-    headers.Authorization = `Bearer ${token}`;
+  if (isProtected || token) {
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
   }
 
   try {
@@ -36,7 +38,7 @@ export async function get(endpoint: string, isProtected: boolean = false) {
 
     const apiData: ApiResponse = await apiResponse.json();
 
-    if (apiData.status == 403) {
+    if (apiData.status == 403 && (apiData.message?.toLowerCase().includes("jwt") || apiData.message?.toLowerCase().includes("expired"))) {
       localStorage.clear();
       window.location.replace("/login");
     }
@@ -62,8 +64,10 @@ export async function post(
 
   const token = localStorage.getItem("token");
 
-  if (isProtected) {
-    headers.Authorization = `Bearer ${token}`;
+  if (isProtected || token) {
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
   }
 
   try {
@@ -75,8 +79,9 @@ export async function post(
 
     const apiData: ApiResponse = await apiResponse.json();
 
-    if (apiData.status == 403) {
+    if (apiData.status == 403 && (apiData.message?.toLowerCase().includes("jwt") || apiData.message?.toLowerCase().includes("expired"))) {
       localStorage.clear();
+      window.location.replace("/login");
     }
 
     return apiData;

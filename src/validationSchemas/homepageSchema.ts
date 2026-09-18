@@ -1,78 +1,60 @@
 import * as Yup from "yup";
 
-const stringField = () => Yup.string().nullable();
-const numberField = () =>
-  Yup.number()
-    .nullable()
-    .transform((value, originalValue) =>
-      originalValue === "" || originalValue === null ? null : value,
-    );
-const booleanField = () => Yup.boolean().nullable();
-
-export interface Badge {
-  text: string;
-}
-
-export interface Button {
-  text: string;
-  url: string;
-}
-
-export interface HeroHeading {
-  line1: string;
-  line2: string;
-  highlight: string;
-}
-
-export interface TrustItem {
-  text: string;
-}
-
-export interface UploadPreview {
+export interface PerspectiveItem {
   title: string;
-  image: string;
+  category: string;
+  href: string;
 }
 
-export interface AiProcessStep {
-  label: string;
-  completed: boolean;
-}
-
-export interface TrustedByLogo {
-  name: string;
-  image: string;
-  url: string;
-}
-
-export interface VideoItem {
+export interface LectureItem {
+  number: string;
   title: string;
   description: string;
-  url: string;
+  image: string;
+  href: string;
 }
 
 export interface HomepageValues {
-  trustedBySection: {
+  heroSection: {
+    eyebrow: string;
     title: string;
-    logos: TrustedByLogo[];
-  };
-  videoSection: {
-    items: VideoItem[];
-  };
-  onAirSection: {
-    title: string;
-    urls: string[];
-  };
-  storyVideoSection: {
-    thumbnail: string;
-    url: string;
-  };
-  chairmanMessageSection: {
-    heading: string;
-    name: string;
-    designation: string;
-    message: string;
+    summary: string;
     image: string;
-    button: Button;
+    primaryButtonText: string;
+    primaryButtonLink: string;
+    secondaryButtonText: string;
+    secondaryButtonLink: string;
+  };
+  perspectivesSection: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    items: PerspectiveItem[];
+  };
+  topicsSection: {
+    eyebrow: string;
+    title: string;
+    description: string;
+  };
+  aboutPreviewSection: {
+    heading: string;
+    role: string;
+    paragraphs: string[];
+    credential: string;
+    image: string;
+    buttonText: string;
+    buttonLink: string;
+  };
+  essaysPreviewSection: {
+    eyebrow: string;
+    title: string;
+    description: string;
+  };
+  lecturesSection: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    items: LectureItem[];
   };
   seo: {
     metaTitle: string;
@@ -81,76 +63,46 @@ export interface HomepageValues {
   };
 }
 
-export const createEmptyTrustItem = (): TrustItem => ({
-  text: "",
-});
-
-export const createEmptyUploadPreview = (): UploadPreview => ({
-  title: "",
-  image: "",
-});
-
-export const createEmptyAiProcessStep = (): AiProcessStep => ({
-  label: "",
-  completed: false,
-});
-
-export const createEmptyTrustedByLogo = (): TrustedByLogo => ({
-  name: "",
-  image: "",
-  url: "",
-});
-
-export const createEmptyVideoItem = (): VideoItem => ({
-  title: "",
-  description: "",
-  url: "",
-});
-
-const badgeSchema = Yup.object({
-  text: stringField(),
-});
-
-const buttonSchema = Yup.object({
-  text: stringField(),
-  url: stringField(),
-});
+const stringField = () => Yup.string().trim();
 
 export const homepageSchema = Yup.object({
-  trustedBySection: Yup.object({
-    title: stringField(),
-    logos: Yup.array().of(
-      Yup.object({
-        name: stringField(),
-        image: stringField(),
-        url: stringField(),
-      }),
-    ),
-  }),
-  videoSection: Yup.object({
-    items: Yup.array().of(
-      Yup.object({
-        title: stringField(),
-        description: stringField(),
-        url: stringField(),
-      }),
-    ),
-  }),
-  onAirSection: Yup.object({
-    title: stringField(),
-    urls: Yup.array().of(stringField()),
-  }),
-  storyVideoSection: Yup.object({
-    thumbnail: stringField(),
-    url: stringField(),
-  }),
-  chairmanMessageSection: Yup.object({
-    heading: stringField(),
-    name: stringField(),
-    designation: stringField(),
-    message: stringField(),
+  heroSection: Yup.object({
+    eyebrow: stringField(),
+    title: stringField().required("Hero title is required"),
+    summary: stringField(),
     image: stringField(),
-    button: buttonSchema,
+    primaryButtonText: stringField(),
+    primaryButtonLink: stringField(),
+    secondaryButtonText: stringField(),
+    secondaryButtonLink: stringField(),
+  }),
+  perspectivesSection: Yup.object({
+    eyebrow: stringField(),
+    title: stringField(),
+    description: stringField(),
+  }),
+  topicsSection: Yup.object({
+    eyebrow: stringField(),
+    title: stringField(),
+    description: stringField(),
+  }),
+  aboutPreviewSection: Yup.object({
+    heading: stringField(),
+    role: stringField(),
+    credential: stringField(),
+    image: stringField(),
+    buttonText: stringField(),
+    buttonLink: stringField(),
+  }),
+  essaysPreviewSection: Yup.object({
+    eyebrow: stringField(),
+    title: stringField(),
+    description: stringField(),
+  }),
+  lecturesSection: Yup.object({
+    eyebrow: stringField(),
+    title: stringField(),
+    description: stringField(),
   }),
   seo: Yup.object({
     metaTitle: stringField(),
@@ -160,59 +112,60 @@ export const homepageSchema = Yup.object({
 });
 
 export const homepageInitialValues: HomepageValues = {
-  trustedBySection: {
-    title: "Trusted Brands",
-    logos: [
-      { name: "Havells", image: "", url: "" },
-      { name: "Crompton", image: "", url: "" },
-      { name: "Orient Electric", image: "", url: "" },
-      { name: "Luker", image: "", url: "" },
-    ],
+  heroSection: {
+    eyebrow: "Investor · Writer · Lecturer",
+    title: "Thoughts on finance, business and public policy.",
+    summary: "Colin McLean's insights and perspectives on economics, business, behaviour and public policy.",
+    image: "/images/hero.webp",
+    primaryButtonText: "Read latest thinking",
+    primaryButtonLink: "/writing",
+    secondaryButtonText: "About Colin",
+    secondaryButtonLink: "/about",
   },
-  videoSection: {
+  perspectivesSection: {
+    eyebrow: "Point of view",
+    title: "Perspectives",
+    description: "Thought leadership is more than subjects and credentials. It is the perspective brought to the questions that matter.",
     items: [
-      {
-        title: "Coffee Table Book Launch At AGM 2025",
-        description:
-          "Add a short description for this YouTube video or event highlight.",
-        url: "",
-      },
-      {
-        title: "Lifetime Contribution Award",
-        description:
-          "Use this card for awards, event clips, product videos, or announcements.",
-        url: "",
-      },
-      {
-        title: "Fireside Chat",
-        description:
-          "Add the YouTube URL and update the title or description anytime.",
-        url: "",
-      },
+      { title: "Finance is failing Gen Z", category: "Business", href: "/writing/finance-is-failing-gen-z" },
+      { title: "AI drives growth in micro enterprises", category: "Economics", href: "/writing/ai-drives-growth-in-micro-enterprises" },
+      { title: "Prosperity underpins economic growth", category: "Public policy", href: "/writing/prosperity-underpins-economic-growth" },
     ],
   },
-  onAirSection: {
-    title: "IFMA On Air",
-    urls: [""],
+  topicsSection: {
+    eyebrow: "Focus areas",
+    title: "Key Topics",
+    description: "Explore core subjects across markets, business, public policy and society.",
   },
-  storyVideoSection: {
-    thumbnail: "",
-    url: "",
+  aboutPreviewSection: {
+    heading: "About",
+    role: "Investor. Writer. Guest Lecturer.",
+    paragraphs: [
+      "I’m a professional investor, writing on finance, business and public policy. My recent articles examine current socio-economic and population-health challenges through an economic lens, advocating fresh perspectives on the problems.",
+      "Lecturing focuses on behavioural finance and current market topics, alongside other interests spanning public health, society and life in Scotland.",
+    ],
+    credential: "Recently retired from Board of Public Health Scotland. Writes for The Herald.",
+    image: "/images/portrait.png",
+    buttonText: "More about Colin",
+    buttonLink: "/about",
   },
-  chairmanMessageSection: {
-    heading: "Message from Chairman",
-    name: "",
-    designation: "",
-    message: "",
-    image: "",
-    button: {
-      text: "Read More",
-      url: "",
-    },
+  essaysPreviewSection: {
+    eyebrow: "Recent blogs",
+    title: "Blogs",
+    description: "Recent articles, insights and commentary on markets, business, behaviour and public policy.",
+  },
+  lecturesSection: {
+    eyebrow: "Lectures & speaking",
+    title: "Lectures",
+    description: "Ideas brought into practice through talks and presentations on behavioural finance, investment and current economic topics.",
+    items: [
+      { number: "01", title: "Behavioural Finance in Practice", description: "How human behaviour shapes investment decisions.", image: "/images/lecture-finance.png", href: "/lectures/behavioural-finance-in-practice" },
+      { number: "02", title: "Current Topics in Investment", description: "Key trends and what they mean for investors.", image: "/images/lecture-behaviour.png", href: "/lectures/current-topics-in-investment" },
+    ],
   },
   seo: {
-    metaTitle: "",
-    metaDescription: "",
-    keywords: [],
+    metaTitle: "Colin McLean | Investor, writer and lecturer",
+    metaDescription: "Independent perspectives on investment, economics, business, behaviour and public policy.",
+    keywords: ["Colin McLean", "Investing", "Economics", "Public Policy", "Lectures"],
   },
 };
