@@ -16,8 +16,14 @@ type ApiResponse = {
   totalRecords: number;
 };
 
+const getUrl = (endpoint: string): string => {
+  const base = (API_URL || "").replace(/\/+$/, "");
+  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  return `${base}${path}`;
+};
+
 export async function get(endpoint: string, isProtected: boolean = false) {
-  const url: string = `${API_URL}${endpoint}`;
+  const url: string = getUrl(endpoint);
 
   const headers: HeadersContent = {
     "Content-Type": "application/json",
@@ -55,7 +61,7 @@ export async function post(
   data: object,
   isProtected: boolean = false,
 ) {
-  const url: string = `${API_URL}${endpoint}`;
+  const url: string = getUrl(endpoint);
   const body: string = JSON.stringify(data);
 
   const headers: HeadersContent = {
@@ -120,7 +126,7 @@ export async function post(
 // }
 
 export async function put(endpoint: string, data: object, jwtToken?: string) {
-  const url: string = `${API_URL}${endpoint}`;
+  const url: string = getUrl(endpoint);
   const body: string = JSON.stringify(data);
 
   // const token = jwtToken ? jwtToken : localStorage.getItem("token");
@@ -166,7 +172,7 @@ export async function put(endpoint: string, data: object, jwtToken?: string) {
 }
 
 export async function remove(endpoint: string, recordIds?: string[]) {
-  const url: string = `${API_URL}${endpoint}`;
+  const url: string = getUrl(endpoint);
 
   const token = localStorage.getItem("token");
 
@@ -201,7 +207,7 @@ export async function remove(endpoint: string, recordIds?: string[]) {
 }
 
 export async function removeFile(endpoint: string, filename: string) {
-  const url: string = `${API_URL}${endpoint}`;
+  const url: string = getUrl(endpoint);
 
   const token = localStorage.getItem("token");
 
