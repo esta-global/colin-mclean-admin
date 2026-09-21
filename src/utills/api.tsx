@@ -2,8 +2,9 @@ import { toast } from "react-toastify";
 import { API_URL } from "../constants";
 
 type HeadersContent = {
-  "Content-Type": string;
+  "Content-Type"?: string;
   Authorization?: string;
+  Accept?: string;
 };
 
 type ApiResponse = {
@@ -26,7 +27,7 @@ export async function get(endpoint: string, isProtected: boolean = false) {
   const url: string = getUrl(endpoint);
 
   const headers: HeadersContent = {
-    "Content-Type": "application/json",
+    Accept: "application/json",
   };
 
   const token = localStorage.getItem("token");
@@ -39,7 +40,7 @@ export async function get(endpoint: string, isProtected: boolean = false) {
   try {
     const apiResponse = await fetch(url, {
       method: "GET",
-      headers,
+      headers: headers as HeadersInit,
     });
 
     const apiData: ApiResponse = await apiResponse.json();
