@@ -120,7 +120,8 @@ export function PostList({ defaultType = "blog" }: { defaultType?: ContentType }
   type Record = {
     title: any;
     // slug: any;
-    image: string;
+    coverImage?: string;
+    image?: string;
     createdAt: any;
     status: any;
     id: any;
@@ -144,13 +145,14 @@ export function PostList({ defaultType = "blog" }: { defaultType?: ContentType }
 
       {
         Header: "",
-        accessor: "image",
+        accessor: "coverImage",
         disableSortBy: true,
-        Cell: ({ value }: any) => {
-          if (value) {
+        Cell: ({ row, value }: any) => {
+          const img = addUrlToFile(value || row.original?.coverImage || row.original?.image);
+          if (img) {
             return (
               <div className="post-thumb-cell">
-                <img className="post-thumb" src={value} alt="Post cover" />
+                <img className="post-thumb" src={img} alt="Post cover" />
               </div>
             );
           } else {
