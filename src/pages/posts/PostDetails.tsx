@@ -56,11 +56,21 @@ export function PostDetails({ defaultType = "blog" }: { defaultType?: ContentTyp
   }, [blogDetails?.coverImage]);
 
   const contentHtml = useMemo(() => {
-    return DOMPurify.sanitize(blogDetails?.content || "");
+    let raw = blogDetails?.content || "";
+    if (/&lt;\/?[a-z][a-z0-9]*\b[^&gt;]*&gt;/i.test(raw)) {
+      raw = raw
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/<p>\s*<p>/gi, "<p>")
+        .replace(/<\/p>\s*<\/p>/gi, "</p>");
+    }
+    return DOMPurify.sanitize(raw);
   }, [blogDetails?.content]);
 
   const excerptHtml = useMemo(() => {
-    return DOMPurify.sanitize(blogDetails?.excerpt || "");
+    const raw = blogDetails?.excerpt || "";
+    const clean = raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    return DOMPurify.sanitize(clean);
   }, [blogDetails?.excerpt]);
 
   return (
@@ -123,9 +133,12 @@ export function PostDetails({ defaultType = "blog" }: { defaultType?: ContentTyp
                   </span>
                   <span className="post-detail-dot"></span>
                   <span>
-                    {blogDetails?.createdAt
-                      ? moment(blogDetails.createdAt).format("MMM DD, YYYY")
-                      : "-"}
+                    {(() => {
+                      const d = blogDetails?.date || blogDetails?.createdAt;
+                      if (!d) return "-";
+                      const m = moment(new Date(d));
+                      return m.isValid() ? m.format("MMM DD, YYYY") : d;
+                    })()}
                   </span>
                 </div>
 
@@ -171,6 +184,16 @@ export function PostDetails({ defaultType = "blog" }: { defaultType?: ContentTyp
                 <InfoRow label="Author" value={blogDetails?.author?.name} />
               ) : null}
               <InfoRow label="Category" value={blogDetails?.category?.name} />
+              <InfoRow
+                label="Publish Date"
+                value={
+                  blogDetails?.date
+                    ? moment(new Date(blogDetails.date)).isValid()
+                      ? moment(new Date(blogDetails.date)).format("DD MMM YYYY")
+                      : blogDetails.date
+                    : "-"
+                }
+              />
               <InfoRow
                 label="Created"
                 value={

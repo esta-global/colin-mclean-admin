@@ -32,6 +32,7 @@ export const postSchema = Yup.object({
   content: Yup.string().label("Content"),
   excerpt: Yup.string().label("Excerpt"),
   coverImage: Yup.string().required().label("Cover Image"),
+  date: Yup.string().label("Date"),
 
   author: Yup.object().nullable().notRequired().label("Author"),
   category: Yup.object().required().label("Category"),
@@ -55,6 +56,7 @@ export const postInitialValues: PostValues = {
   blogSections: [],
   excerpt: "",
   coverImage: "",
+  date: new Date().toISOString().split("T")[0],
 
   author: null,
   category: null,
@@ -77,6 +79,7 @@ export interface PostValues {
   blogSections: BlogSection[];
   excerpt: string;
   coverImage: string;
+  date: string;
 
   author: {
     label: string;

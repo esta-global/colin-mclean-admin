@@ -70,11 +70,30 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
       setLoading(true);
       const { blogSections, ...payloadValues } = values;
 
+      const rawContent = blogSections.length
+        ? sectionsToHtml(blogSections)
+        : normalizeImageLayoutHtml(values.content);
+
+      // Clean encoded entities so HTML tags are stored as actual HTML
+      let cleanContent = rawContent || "";
+      if (/&lt;\/?[a-z][a-z0-9]*\b[^&gt;]*&gt;/i.test(cleanContent)) {
+        cleanContent = cleanContent
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/<p>\s*<p>/gi, "<p>")
+          .replace(/<\/p>\s*<\/p>/gi, "</p>");
+      }
+
+      // Strip any HTML tags from excerpt so only plain text is saved
+      const cleanExcerpt = values.excerpt
+        ? values.excerpt.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+        : "";
+
       const newValue = {
         ...payloadValues,
-        content: blogSections.length
-          ? sectionsToHtml(blogSections)
-          : normalizeImageLayoutHtml(values.content),
+        excerpt: cleanExcerpt,
+        content: cleanContent,
+        date: values.date || "",
         schemaData: blogSections.length
           ? JSON.stringify({ blogSections })
           : values.schemaData || "",
@@ -251,6 +270,14 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
       .join("");
   }
 
+  function formatToInputDate(dateStr?: string): string {
+    if (!dateStr) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toISOString().split("T")[0];
+  }
+
   // Get Data From Database
   useEffect(
     function () {
@@ -262,6 +289,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
           apiData.status = `${apiData.status}`;
           apiData.type = apiData.type || defaultType;
           apiData.featured = Boolean(apiData.featured);
+          apiData.date = formatToInputDate(apiData.date || apiData.createdAt);
 
           delete apiData.isDeleted;
           delete apiData.createdAt;
@@ -586,7 +614,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                     />
                   </div>
                   {/* Select Category */}
-                  <div className="form-group col-md-12">
+                  <div className="form-group col-md-6">
                     <CustomSelect
                       label="Select Category"
                       placeholder="Select Category"
@@ -603,6 +631,20 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                       handleBlur={() => {
                         setFieldTouched("category", true);
                       }}
+                    />
+                  </div>
+
+                  <div className="form-group col-md-6">
+                    <InputBox
+                      label="Date (Publish Date)"
+                      name="date"
+                      handleBlur={handleBlur}
+                      handleChange={handleChange}
+                      type="date"
+                      placeholder="Select publish date"
+                      value={values.date}
+                      touched={touched.date}
+                      error={errors.date}
                     />
                   </div>
 
@@ -1093,6 +1135,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                 <p>{values.excerpt || `${labels.singular} excerpt preview will appear here.`}</p>
                 <div className="post-form-preview-meta">
                   <span>{values.category?.label || "Category"}</span>
+                  {values.date ? <span>{values.date}</span> : null}
                   <strong>{values.status == "true" ? "Published" : "Draft"}</strong>
                 </div>
               </div>

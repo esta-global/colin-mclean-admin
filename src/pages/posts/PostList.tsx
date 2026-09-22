@@ -180,10 +180,13 @@ export function PostList({ defaultType = "blog" }: { defaultType?: ContentType }
       // },
 
       {
-        Header: "CREATED AT",
-        accessor: "createdAt",
-        Cell: ({ value }: any) => {
-          return moment(new Date(value)).format("DD-MM-YYYY");
+        Header: "DATE",
+        accessor: "date",
+        Cell: ({ row, value }: any) => {
+          const dateVal = value || row.original?.createdAt;
+          if (!dateVal) return "-";
+          const m = moment(new Date(dateVal));
+          return m.isValid() ? m.format("DD-MM-YYYY") : value;
         },
       },
       {

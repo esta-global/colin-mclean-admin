@@ -7522,6 +7522,14 @@ ul.timeline>li:before {
   box-shadow: none;
 }
 
+.post-form-page input[type="date"].form-control {
+  padding: 0.5rem 0.85rem;
+  background-color: #ffffff;
+  color: #001b4d;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .post-form-page .form-control:focus {
   border-color: #1473ff;
   box-shadow: 0 0 0 3px rgba(20, 115, 255, 0.11);

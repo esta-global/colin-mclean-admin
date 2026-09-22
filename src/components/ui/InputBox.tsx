@@ -3,7 +3,7 @@ import React from "react";
 export function InputBox(props: PropsType) {
   return (
     <>
-      <label htmlFor={props.name}>
+      <label htmlFor={props.name} className="form-label post-form-field-label">
         {props.label}
         {props.required ? <span className="text-danger"> *</span> : null}
       </label>
