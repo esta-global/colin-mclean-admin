@@ -61,12 +61,12 @@ export function Sidebar() {
         </li>
 
         {/* Main Category Management */}
-        <li className={`nav-item ${isCategoryPath ? "active" : ""}`}>
+        {/* <li className={`nav-item ${isCategoryPath ? "active" : ""}`}>
           <Link className="nav-link" to="/blogCategories">
             <i className="ti-layout-grid2 menu-icon"></i>
             <span className="menu-title">Main Categories</span>
           </Link>
-        </li>
+        </li> */}
 
         {/* Blog Management */}
         <li className={`nav-item ${isBlogPath ? "active" : ""}`}>
@@ -149,12 +149,12 @@ export function Sidebar() {
         </li>
 
         {/* Media Library */}
-        <li className={`nav-item ${location.pathname.startsWith("/media") ? "active" : ""}`}>
+        {/* <li className={`nav-item ${location.pathname.startsWith("/media") ? "active" : ""}`}>
           <Link className="nav-link" to="/media">
             <i className="ti-image menu-icon"></i>
             <span className="menu-title">Media Library</span>
           </Link>
-        </li>
+        </li> */}
       </ul>
 
       <div className="ss-sidebar-footer">

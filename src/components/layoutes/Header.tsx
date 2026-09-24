@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Face from "../../assets/images/faces/face0.png";
+import Face from "../../assets/images/face.png";
 
 export function Header() {
   const navigation = useNavigate();

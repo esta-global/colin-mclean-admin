@@ -1,7 +1,7 @@
 export function SubmitButton(props: PropsType) {
   return (
     <button
-      className={`btn btn-primary text-light ${props.className || ""}`}
+      className={`btn btn-primary ${props.className || ""}`}
       type="submit"
       disabled={props.loading}
     >

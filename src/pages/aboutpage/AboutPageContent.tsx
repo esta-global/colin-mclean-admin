@@ -18,6 +18,9 @@ import {
 
 export function AboutPageContent() {
   const [loading, setLoading] = useState(false);
+  const [keywordsInput, setKeywordsInput] = useState(
+    aboutPageInitialValues.seo.keywords.join(", ")
+  );
 
   const formik = useFormik<AboutPageValues>({
     initialValues: aboutPageInitialValues,
@@ -26,11 +29,14 @@ export function AboutPageContent() {
       setLoading(true);
       try {
         const payload = {
-          ...values,
-          biography: values.biography.map((p) => p.trim()).filter(Boolean),
+          title: values.title,
+          role: values.role,
+          portraitImage: values.portraitImage,
+          biography: (values.biography || []).map((p) => p.trim()).filter(Boolean),
           seo: {
-            ...values.seo,
-            keywords: values.seo.keywords.map((k) => k.trim()).filter(Boolean),
+            metaTitle: values.seo?.metaTitle || "",
+            metaDescription: values.seo?.metaDescription || "",
+            keywords: (values.seo?.keywords || []).map((k) => k.trim()).filter(Boolean),
           },
         };
 
@@ -54,19 +60,25 @@ export function AboutPageContent() {
       try {
         const res = await get("/aboutPage", true);
         if (res?.status === 200 && res?.body) {
+          const body = res.body;
+          const loadedKeywords = Array.isArray(body.seo?.keywords)
+            ? body.seo.keywords
+            : aboutPageInitialValues.seo.keywords;
+
+          setKeywordsInput(loadedKeywords.join(", "));
+
           formik.setValues({
-            title: res.body.title || aboutPageInitialValues.title,
-            role: res.body.role || aboutPageInitialValues.role,
-            portraitImage: res.body.portraitImage || aboutPageInitialValues.portraitImage,
-            biography: Array.isArray(res.body.biography) && res.body.biography.length > 0
-              ? res.body.biography
-              : aboutPageInitialValues.biography,
+            title: body.title || aboutPageInitialValues.title,
+            role: body.role || aboutPageInitialValues.role,
+            portraitImage: body.portraitImage || aboutPageInitialValues.portraitImage,
+            biography:
+              Array.isArray(body.biography) && body.biography.length > 0
+                ? body.biography
+                : aboutPageInitialValues.biography,
             seo: {
-              metaTitle: res.body.seo?.metaTitle || aboutPageInitialValues.seo.metaTitle,
-              metaDescription: res.body.seo?.metaDescription || aboutPageInitialValues.seo.metaDescription,
-              keywords: Array.isArray(res.body.seo?.keywords)
-                ? res.body.seo.keywords
-                : aboutPageInitialValues.seo.keywords,
+              metaTitle: body.seo?.metaTitle || aboutPageInitialValues.seo.metaTitle,
+              metaDescription: body.seo?.metaDescription || aboutPageInitialValues.seo.metaDescription,
+              keywords: loadedKeywords,
             },
           });
         }
@@ -82,16 +94,16 @@ export function AboutPageContent() {
   }, []);
 
   const addBiographyParagraph = () => {
-    formik.setFieldValue("biography", [...formik.values.biography, ""]);
+    formik.setFieldValue("biography", [...(formik.values.biography || []), ""]);
   };
 
   const removeBiographyParagraph = (index: number) => {
-    const updated = formik.values.biography.filter((_, i) => i !== index);
+    const updated = (formik.values.biography || []).filter((_, i) => i !== index);
     formik.setFieldValue("biography", updated);
   };
 
   return (
-    <div className="content-wrapper">
+    <div className="content-wrapper homepage-management-wrapper">
       <OverlayLoading loading={loading} />
       <div className="row">
         <div className="col-12 grid-margin stretch-card">
@@ -122,9 +134,12 @@ export function AboutPageContent() {
                           name="title"
                           placeholder="e.g. Colin McLean"
                           value={formik.values.title}
+                          handleChange={formik.handleChange}
+                          handleBlur={formik.handleBlur}
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           error={formik.touched.title ? formik.errors.title : undefined}
+                          touched={formik.touched.title}
                         />
                       </div>
                       <div className="col-md-6 mb-3">
@@ -133,9 +148,12 @@ export function AboutPageContent() {
                           name="role"
                           placeholder="e.g. Investor. Writer. Guest Lecturer."
                           value={formik.values.role}
+                          handleChange={formik.handleChange}
+                          handleBlur={formik.handleBlur}
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           error={formik.touched.role ? formik.errors.role : undefined}
+                          touched={formik.touched.role}
                         />
                       </div>
                       <div className="col-12 mb-3">
@@ -165,21 +183,21 @@ export function AboutPageContent() {
                     <h5 className="mb-0 font-weight-bold">Biography Paragraphs</h5>
                     <button
                       type="button"
-                      className="btn btn-sm btn-primary"
+                      className="btn btn-sm btn-primary py-1 px-3"
                       onClick={addBiographyParagraph}
                     >
                       + Add Paragraph
                     </button>
                   </div>
                   <div className="card-body">
-                    {formik.values.biography.map((para, idx) => (
+                    {(formik.values.biography || []).map((para, idx) => (
                       <div key={idx} className="mb-3 p-3 border rounded bg-light position-relative">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <label className="font-weight-bold mb-0">Paragraph {idx + 1}</label>
-                          {formik.values.biography.length > 1 && (
+                          {(formik.values.biography || []).length > 1 && (
                             <button
                               type="button"
-                              className="btn btn-sm btn-outline-danger"
+                              className="btn btn-sm btn-outline-danger py-1 px-2"
                               onClick={() => removeBiographyParagraph(idx)}
                             >
                               Remove
@@ -210,7 +228,9 @@ export function AboutPageContent() {
                         label="Meta Title"
                         name="seo.metaTitle"
                         placeholder="About Page Meta Title"
-                        value={formik.values.seo.metaTitle}
+                        value={formik.values.seo?.metaTitle || ""}
+                        handleChange={formik.handleChange}
+                        handleBlur={formik.handleBlur}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                       />
@@ -220,9 +240,12 @@ export function AboutPageContent() {
                         label="Meta Description"
                         name="seo.metaDescription"
                         placeholder="About Page Meta Description"
-                        value={formik.values.seo.metaDescription}
+                        value={formik.values.seo?.metaDescription || ""}
+                        handleChange={formik.handleChange}
+                        handleBlur={formik.handleBlur}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
+                        rows={3}
                       />
                     </div>
                     <div className="mb-3">
@@ -230,9 +253,17 @@ export function AboutPageContent() {
                         label="Keywords (comma separated)"
                         name="keywords"
                         placeholder="Colin McLean, Investor, Finance, Scotland"
-                        value={formik.values.seo.keywords.join(", ")}
+                        value={keywordsInput}
+                        handleChange={(e: any) => {
+                          const val = e.target.value;
+                          setKeywordsInput(val);
+                          const list = val.split(",").map((k: string) => k.trim()).filter(Boolean);
+                          formik.setFieldValue("seo.keywords", list);
+                        }}
                         onChange={(e: any) => {
-                          const list = e.target.value.split(",").map((k: string) => k.trim());
+                          const val = e.target.value;
+                          setKeywordsInput(val);
+                          const list = val.split(",").map((k: string) => k.trim()).filter(Boolean);
                           formik.setFieldValue("seo.keywords", list);
                         }}
                       />
@@ -241,7 +272,7 @@ export function AboutPageContent() {
                 </div>
 
                 <div className="mt-4">
-                  <SubmitButton loading={loading} text="Save About Page" />
+                  <SubmitButton loading={loading} text="Save About Page" className="py-2 px-4" />
                 </div>
               </form>
             </div>

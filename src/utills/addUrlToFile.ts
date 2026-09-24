@@ -10,7 +10,7 @@ export function addUrlToFile(img?: string | null, url?: string) {
   ) {
     return img;
   }
-  if (img.includes("drive.google.com") || img.includes("api.lamikraft.com")) return img;
+  if (img.includes("drive.google.com") || img.includes("api.colin-mclean.com")) return img;
   if (img.startsWith("/")) return img;
   if (url) return `${url}/${img}`;
   return `${FILE_URL}/${img}`;

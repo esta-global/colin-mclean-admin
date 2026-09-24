@@ -14,6 +14,24 @@ export interface LectureItem {
   href: string;
 }
 
+export interface TopicItem {
+  number: string;
+  title: string;
+  description: string;
+  image: string;
+  href: string;
+}
+
+export interface EssayItem {
+  title: string;
+  paragraph: string;
+  category: string;
+  date: string;
+  readingTime: string;
+  image: string;
+  href: string;
+}
+
 export interface HomepageValues {
   heroSection: {
     eyebrow: string;
@@ -35,6 +53,7 @@ export interface HomepageValues {
     eyebrow: string;
     title: string;
     description: string;
+    items: TopicItem[];
   };
   aboutPreviewSection: {
     heading: string;
@@ -49,6 +68,7 @@ export interface HomepageValues {
     eyebrow: string;
     title: string;
     description: string;
+    items: EssayItem[];
   };
   lecturesSection: {
     eyebrow: string;
@@ -136,6 +156,36 @@ export const homepageInitialValues: HomepageValues = {
     eyebrow: "Focus areas",
     title: "Key Topics",
     description: "Explore core subjects across markets, business, public policy and society.",
+    items: [
+      {
+        number: "01",
+        title: "Investment & Markets",
+        description: "Key shifts in markets, consumer demand, competition and economic forces.",
+        image: "/images/investment.png",
+        href: "/writing/economics/pensions-are-not-fit-for-purpose-reform-is-needed",
+      },
+      {
+        number: "02",
+        title: "Behaviour & Public Health",
+        description: "Exploring government policies, regulations and societal impact.",
+        image: "/images/business.png",
+        href: "/writing/public-policy/scotland-should-build-on-the-private-sector-role-in-public-health",
+      },
+      {
+        number: "03",
+        title: "Business & Technology",
+        description: "Insights into growth, leadership, innovation and modern business decisions.",
+        image: "/images/health.png",
+        href: "/writing/business/ai-hitting-the-talent-pipeline-policy-implementation-is-too-slow",
+      },
+      {
+        number: "04",
+        title: "Education & Society",
+        description: "Examining changing education models, workforce skills and learning.",
+        image: "/images/education.png",
+        href: "/writing/education/action-needed-on-digital-harms-for-scotlands-young-people",
+      },
+    ],
   },
   aboutPreviewSection: {
     heading: "About",
@@ -153,6 +203,44 @@ export const homepageInitialValues: HomepageValues = {
     eyebrow: "Recent blogs",
     title: "Blogs",
     description: "Recent articles, insights and commentary on markets, business, behaviour and public policy.",
+    items: [
+      {
+        title: "Behavioural biases that influence decisions",
+        paragraph: "Understanding the psychology behind smarter choices.",
+        category: "Economics",
+        date: "16 May 2025",
+        readingTime: "7 min read",
+        image: "/images/essay-behaviour.png",
+        href: "/writing/economics/behavioural-finance-the-risks-of-mixing-emotion-and-investments",
+      },
+      {
+        title: "The economy: risks, resilience and reality",
+        paragraph: "Observations on growth, inflation and where we go from here.",
+        category: "Economics",
+        date: "20 May 2025",
+        readingTime: "5 min read",
+        image: "/images/essay-economy.png",
+        href: "/writing/economics/us-trade-policy-fuels-and-the-debate-on-sustainable-growth",
+      },
+      {
+        title: "Sound analysis is key to the long term",
+        paragraph: "A look at patience, compounding and avoiding short-term noise.",
+        category: "Investing",
+        date: "24 May 2025",
+        readingTime: "6 min read",
+        image: "/images/essay-markets.png",
+        href: "/writing/economics/companies-arent-living-as-long-now-should-investors-worry",
+      },
+      {
+        title: "Scotland’s economy and health",
+        paragraph: "Current issues in health, society and education.",
+        category: "Scotland",
+        date: "12 May 2025",
+        readingTime: "4 min read",
+        image: "/images/essay-scotland.png",
+        href: "/writing/public-policy/scotland-should-build-on-the-private-sector-role-in-public-health",
+      },
+    ],
   },
   lecturesSection: {
     eyebrow: "Lectures & speaking",

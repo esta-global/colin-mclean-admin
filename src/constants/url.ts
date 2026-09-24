@@ -26,7 +26,6 @@ export const BASE_URL =
     : "http://localhost:5175";
 
 export const API_URL = rawApiUrl.replace(/\/+$/, "");
-
 export const FILE_URL = rawFileUrl.replace(/\/+$/, "");
 
 
