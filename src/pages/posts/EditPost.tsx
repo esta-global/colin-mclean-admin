@@ -163,6 +163,10 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
       text: "",
       image: "",
       imageTitle: "",
+      file: "",
+      fileName: "",
+      fileTitle: "",
+      fileSubtitle: "",
       columns: type === "imageGrid" ? "2" : "2",
       images: type === "imageGrid"
         ? [
@@ -239,6 +243,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
     if (type === "fullImage") return "Full Image";
     if (type === "imageGrid") return "Image Grid";
     if (type === "text") return "Rich Text";
+    if (type === "document") return "PDF / PPT Document";
     return "Heading";
   }
 
@@ -263,6 +268,68 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
             .map((item) => `<figure><img src="${addUrlToFile(item.image)}" alt="${item.title || ""}" />${item.title ? `<figcaption>${item.title}</figcaption>` : ""}</figure>`)
             .join("");
           return items ? `<div>${items}</div>` : "";
+        }
+        if (section.type === "document" && section.file) {
+          const fileUrl = addUrlToFile(section.file);
+          const isPdf = /\.pdf($|\?)/i.test(section.file);
+          const extName = (section.file.split(".").pop() || (isPdf ? "pdf" : "ppt")).toUpperCase();
+          const title = section.fileTitle || section.fileName || "Presentation Deck";
+          const subtitle = section.fileSubtitle || "";
+          const downloadName = section.fileName || section.file;
+          const badgeLabel = `${extName} • Presentation Deck`;
+
+          const viewerContent = isPdf
+            ? `<object data="${fileUrl}" type="application/pdf" width="100%" height="100%" style="display: block; width: 100%; height: 100%;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #ffffff; padding: 2rem; text-align: center;">
+                  <p style="font-size: 1.05rem; margin-bottom: 1rem; color: #ffffff;">Unable to display PDF preview directly in this browser.</p>
+                  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;">
+                    <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" style="color: #ffffff; background-color: #bd921e; padding: 0.6rem 1.2rem; border-radius: 4px; text-decoration: none; font-weight: 600;">Open PDF in New Tab</a>
+                    <a href="${fileUrl}" download="${downloadName}" style="color: #ffffff; border: 1px solid #ffffff; padding: 0.6rem 1.2rem; border-radius: 4px; text-decoration: none; font-weight: 600;">Download PDF</a>
+                  </div>
+                </div>
+              </object>`
+            : `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}" width="100%" height="100%" style="border: none; width: 100%; height: 100%; display: block;" title="${title}">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #ffffff; padding: 2rem; text-align: center;">
+                  <p style="font-size: 1.05rem; margin-bottom: 1rem; color: #ffffff;">Unable to display presentation preview directly in this browser.</p>
+                  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;">
+                    <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" style="color: #ffffff; background-color: #bd921e; padding: 0.6rem 1.2rem; border-radius: 4px; text-decoration: none; font-weight: 600;">Open Presentation in New Tab</a>
+                    <a href="${fileUrl}" download="${downloadName}" style="color: #ffffff; border: 1px solid #ffffff; padding: 0.6rem 1.2rem; border-radius: 4px; text-decoration: none; font-weight: 600;">Download Presentation</a>
+                  </div>
+                </div>
+              </iframe>`;
+
+          return `<div class="blog-document-section" style="margin: 2.5rem 0;">
+  <div class="blog-document-header" style="margin-bottom: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <p style="font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: #bd921e; font-weight: 700; margin: 0 0 0.5rem 0;">
+          ${badgeLabel}
+        </p>
+        <h3 style="font-size: clamp(1.4rem, 2.5vw, 1.85rem); font-family: var(--font-serif, Georgia, serif); font-weight: 500; line-height: 1.2; margin: 0; color: #1d211c;">
+          ${title}
+        </h3>
+        ${subtitle ? `<p style="color: #61675f; margin-top: 0.45rem; font-size: 0.95rem; margin-bottom: 0;">${subtitle}</p>` : ""}
+      </div>
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="site-btn blog-document-btn-open" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.25rem; border-radius: 4px; background-color: #bd921e; color: #ffffff; font-size: 0.85rem; font-weight: 600; text-decoration: none;">
+          Open in Full Tab
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </a>
+        <a href="${fileUrl}" download="${downloadName}" class="lecture-btn-download blog-document-btn-download" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.25rem; border-radius: 4px; border: 1px solid #dfe1da; background-color: #f7f6f2; color: #1d211c; font-size: 0.85rem; font-weight: 600; text-decoration: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Presentation (${extName})
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="blog-document-viewer" style="position: relative; width: 100%; height: 75vh; min-height: 520px; border: 1px solid #dfe1da; border-radius: 6px; overflow: hidden; background: #2a2d32; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+    ${viewerContent}
+  </div>
+</div>`;
         }
         return "";
       })
@@ -437,6 +504,54 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
     return Array.from(clipboardData?.files || []).find((file) =>
       file.type.startsWith("image/"),
     );
+  }
+
+  async function uploadDocumentFile(file: File) {
+    const allowedExtensions = [".pdf", ".ppt", ".pptx"];
+    const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+    const isDoc =
+      allowedExtensions.includes(ext) ||
+      file.type === "application/pdf" ||
+      file.type.includes("presentation") ||
+      file.type.includes("powerpoint");
+
+    if (!isDoc) {
+      toast.error("Please upload a valid PDF or PPT/PPTX file.");
+      return null;
+    }
+
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
+    if (file.size > MAX_FILE_SIZE) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+      toast.error(`File size (${sizeMb} MB) exceeds maximum allowed limit of 1 MB. Please compress or select a file under 1 MB.`);
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("files", file);
+
+    try {
+      const url = `${API_URL}/fileUploads`;
+      const apiResponse = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
+
+      const apiData = await apiResponse.json();
+
+      if (apiData.status == 200 && apiData.body?.length) {
+        return {
+          filename: apiData.body[0].filename as string,
+          originalName: file.name,
+        };
+      } else {
+        toast.error(apiData.message || "Failed to upload document");
+        return null;
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to upload document");
+      return null;
+    }
   }
 
   // handleDeleteFile
@@ -735,6 +850,7 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                     <button type="button" onClick={() => addBlogSection("imageTextRight")}>Text Left + Image</button>
                     <button type="button" onClick={() => addImageGridSection("2")}>Add 2 Images</button>
                     <button type="button" onClick={() => addImageGridSection("3")}>Add 3 Images</button>
+                    <button type="button" onClick={() => addBlogSection("document")}>Add PDF / PPT</button>
                   </div>
 
                   {values.blogSections.length ? (
@@ -865,6 +981,132 @@ export function EditPost({ defaultType = "blog" }: { defaultType?: ContentType }
                                   <input className="form-control" onChange={(event) => updateSectionImage(sectionIndex, imageIndex, { title: event.target.value })} placeholder="Image title" value={item.title} />
                                 </div>
                               ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {section.type === "document" ? (
+                          <div className="blog-section-document-box">
+                            {section.file ? (
+                              <div className="blog-section-document-file-preview">
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                                  <span
+                                    className={`blog-section-document-badge ${
+                                      /\.pdf($|\?)/i.test(section.file)
+                                        ? "blog-section-document-badge--pdf"
+                                        : "blog-section-document-badge--ppt"
+                                    }`}
+                                  >
+                                    {/\.pdf($|\?)/i.test(section.file) ? "PDF" : "PPT"}
+                                  </span>
+                                  <strong>{section.fileName || section.file}</strong>
+                                  <a
+                                    href={addUrlToFile(section.file)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ fontSize: "12px", color: "#bd921e", textDecoration: "underline", marginLeft: "6px" }}
+                                  >
+                                    Open File
+                                  </a>
+                                </div>
+                                <div style={{ display: "flex", gap: "8px" }}>
+                                  <label
+                                    style={{
+                                      cursor: "pointer",
+                                      margin: 0,
+                                      fontSize: "12px",
+                                      padding: "4px 10px",
+                                      border: "1px solid #deded6",
+                                      borderRadius: "5px",
+                                      background: "#ffffff",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Replace File
+                                    <input
+                                      accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                                      onChange={async (event) => {
+                                        const file = event.target.files?.[0];
+                                        if (!file) return;
+                                        const res = await uploadDocumentFile(file);
+                                        if (res) {
+                                          updateBlogSection(sectionIndex, {
+                                            file: res.filename,
+                                            fileName: res.originalName,
+                                            fileTitle: section.fileTitle || res.originalName.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
+                                          });
+                                        }
+                                        event.target.value = "";
+                                      }}
+                                      style={{ display: "none" }}
+                                      type="file"
+                                    />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateBlogSection(sectionIndex, { file: "", fileName: "" })}
+                                    style={{
+                                      fontSize: "12px",
+                                      padding: "4px 10px",
+                                      border: "1px solid #feb2b2",
+                                      borderRadius: "5px",
+                                      background: "#fff5f5",
+                                      color: "#c53030",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Remove File
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <label className="form-label" style={{ fontWeight: 600, fontSize: "13px", marginBottom: "6px", display: "block" }}>
+                                  Upload PDF or PPT / PPTX Presentation:
+                                </label>
+                                <input
+                                  accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                                  className="form-control"
+                                  onChange={async (event) => {
+                                    const file = event.target.files?.[0];
+                                    if (!file) return;
+                                    const res = await uploadDocumentFile(file);
+                                    if (res) {
+                                      updateBlogSection(sectionIndex, {
+                                        file: res.filename,
+                                        fileName: res.originalName,
+                                        fileTitle: section.fileTitle || res.originalName.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
+                                      });
+                                    }
+                                    event.target.value = "";
+                                  }}
+                                  type="file"
+                                />
+                                <small className="blog-section-help" style={{ display: "block", marginTop: "4px" }}>
+                                  Supports PDF (.pdf) and PowerPoint (.ppt, .pptx) presentations.
+                                </small>
+                              </div>
+                            )}
+
+                            <div className="row" style={{ marginTop: "8px" }}>
+                              <div className="col-md-6 form-group" style={{ marginBottom: 0 }}>
+                                <label style={{ fontSize: "12px", fontWeight: 600 }}>Presentation Title (optional)</label>
+                                <input
+                                  className="form-control"
+                                  onChange={(event) => updateBlogSection(sectionIndex, { fileTitle: event.target.value })}
+                                  placeholder="e.g. Current Topics in Investment"
+                                  value={section.fileTitle || ""}
+                                />
+                              </div>
+                              <div className="col-md-6 form-group" style={{ marginBottom: 0 }}>
+                                <label style={{ fontSize: "12px", fontWeight: 600 }}>Subtitle / Context (optional)</label>
+                                <input
+                                  className="form-control"
+                                  onChange={(event) => updateBlogSection(sectionIndex, { fileSubtitle: event.target.value })}
+                                  placeholder="e.g. Heriot-Watt University • March 2026 • Colin McLean"
+                                  value={section.fileSubtitle || ""}
+                                />
+                              </div>
                             </div>
                           </div>
                         ) : null}

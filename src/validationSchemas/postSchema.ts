@@ -7,7 +7,8 @@ export type BlogSectionType =
   | "fullImage"
   | "imageGrid"
   | "imageTextLeft"
-  | "imageTextRight";
+  | "imageTextRight"
+  | "document";
 
 export interface BlogSectionImage {
   image: string;
@@ -23,6 +24,10 @@ export interface BlogSection {
   imageTitle: string;
   columns: "2" | "3";
   images: BlogSectionImage[];
+  file?: string;
+  fileName?: string;
+  fileTitle?: string;
+  fileSubtitle?: string;
 }
 
 export const postSchema = Yup.object({
