@@ -28,7 +28,7 @@ export const BASE_URL =
 // export const API_URL = rawApiUrl.replace(/\/+$/, "");
 // export const FILE_URL = rawFileUrl.replace(/\/+$/, "");
 
-export const API_URL = "https://colin-mclean-api.esta-dev.com/api/v1"
-export const FILE_URL = "https://colin-mclean-api.esta-dev.com/uploads";
+export const API_URL = "https://api.articlesbycolin.com/api/v1"
+export const FILE_URL = "https://api.articlesbycolin.com/uploads";
 
 
